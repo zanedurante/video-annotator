@@ -1,0 +1,40 @@
+{
+  "videoInfo": {
+    "duration": 41.44833333333333,
+    "filename": "4077a5dd-a27a-47be-9458-9573a9f22614",
+    "frameRate": 30,
+    "totalFrames": 1243
+  },
+  "manualAnnotations": {
+    "rightPersonScreen": [
+      {
+        "startFrame": 43,
+        "endFrame": 99
+      },
+      {
+        "startFrame": 221,
+        "endFrame": 240
+      }
+    ],
+    "rightPersonGaze": [
+      {
+        "startFrame": 6,
+        "endFrame": 43
+      },
+      {
+        "startFrame": 99,
+        "endFrame": 126
+      }
+    ],
+    "leftPersonGaze": [
+      {
+        "startFrame": 180,
+        "endFrame": 204
+      },
+      {
+        "startFrame": 244,
+        "endFrame": 261
+      }
+    ]
+  }
+}

@@ -1,110 +1,49 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Camera, Edit2, Scissors, Trash2 } from 'lucide-react';
-
-// Types for our annotations
-interface Annotation {
-  id: string;
-  frame: number;
-  endFrame: number | null;
-  gaze: string;
-  createdAt: number;
-  modifiedAt: number | null;
-}
-
-interface AnnotationSet {
-  human1: Annotation[];
-  human2: Annotation[];
-}
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Camera } from 'lucide-react';
+import TimelineVisualization from '../ui/TimelineVisualization';
 
 const VideoAnnotator = () => {
-  const [video, setVideo] = useState<string | null>(null);
-  const [frameInterval, setFrameInterval] = useState(1);
   const [currentFrame, setCurrentFrame] = useState(0);
   const [totalFrames, setTotalFrames] = useState(0);
-  const [fps, setFps] = useState(30);
-  const [activeAnnotator, setActiveAnnotator] = useState<string | null>(null);
-  const [editMode, setEditMode] = useState(false);
-  const [selectedSegment, setSelectedSegment] = useState<{ human: string; id: string } | null>(null);
-  
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const keydownIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  
-  const [annotations, setAnnotations] = useState<AnnotationSet>({
-    human1: [{ 
-      id: '1',
-      frame: 0, 
-      gaze: 'neither', 
-      endFrame: null,
-      createdAt: Date.now(),
-      modifiedAt: null
-    }],
-    human2: [{ 
-      id: '2',
-      frame: 0, 
-      gaze: 'neither', 
-      endFrame: null,
-      createdAt: Date.now(),
-      modifiedAt: null
-    }]
+  const [frameInterval, setFrameInterval] = useState(50);
+  const [annotationPhase, setAnnotationPhase] = useState('doctor'); // 'doctor' or 'patient'
+  const [continuousAnnotationInterval, setContinuousAnnotationInterval] = useState(null);
+  const [video, setVideo] = useState(null);
+  const [modelData, setModelData] = useState(null);
+  const [annotations, setAnnotations] = useState({
+    doctor: {},  // Format: { frameNumber: annotationValue }
+    patient: {}
   });
+  
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
 
-  const GAZE_TYPES = {
-    SCREEN: { value: 'screen', color: '#EF4444', key: 's', label: 'Screen' },
-    HUMAN: { value: 'human', color: '#22C55E', key: 'h', label: 'Human' },
-    NEITHER: { value: 'neither', color: '#EAB308', key: 'n', label: 'Neither' }
-  };
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle video file upload
+  const handleFileUpload = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
-    if (!file.type.startsWith('video/')) {
-      alert('Please select a valid video file.');
-      return;
-    }
 
     try {
       const url = URL.createObjectURL(file);
       setVideo(url);
-      setCurrentFrame(0);
-      setActiveAnnotator(null);
       
       const videoEl = document.createElement('video');
       videoEl.src = url;
       
-      await new Promise((resolve, reject) => {
+      await new Promise((resolve) => {
         videoEl.onloadedmetadata = () => {
-          const calculatedFps = Math.round(videoEl.duration * fps);
-          setTotalFrames(calculatedFps);
-          setFps(30);
+          const frames = Math.round(videoEl.duration * 30); // Assuming 30fps
+          setTotalFrames(frames);
+          setCurrentFrame(0);
           
           if (videoRef.current) {
             videoRef.current.src = url;
             videoRef.current.currentTime = 0;
           }
-
-          setAnnotations({
-            human1: [{ frame: 0, gaze: 'neither', endFrame: null }],
-            human2: [{ frame: 0, gaze: 'neither', endFrame: null }]
-          });
-
-          resolve(true);
+          resolve();
         };
-        videoEl.onerror = reject;
-        
-        setTimeout(() => reject(new Error('Video loading timeout')), 10000);
       });
     } catch (error) {
       console.error('Error loading video:', error);
@@ -112,501 +51,453 @@ const VideoAnnotator = () => {
     }
   };
 
+  // Update canvas with current frame
   const updateFrame = useCallback(() => {
     if (!videoRef.current || !canvasRef.current) return;
     
     const video = videoRef.current;
     const canvas = canvasRef.current;
     
-    if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
-      canvas.width = video.videoWidth || 640;
-      canvas.height = video.videoHeight || 480;
-    }
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
     
     const ctx = canvas.getContext('2d');
     if (ctx) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      try {
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      } catch (error) {
-        console.error('Error drawing video frame:', error);
-      }
+      ctx.drawImage(video, 0, 0);
     }
   }, []);
 
-  const addAnnotation = useCallback((human: number, gazeType: string) => {
-    if (activeAnnotator && `human${human}` !== activeAnnotator) return;
-
-    const humanKey = `human${human}` as keyof typeof annotations;
-    setAnnotations(prev => {
-      const humanAnnotations = [...prev[humanKey]];
-      const currentAnnotationIndex = humanAnnotations.findIndex(anno => 
-        anno.frame <= currentFrame && (anno.endFrame === null || anno.endFrame >= currentFrame)
-      );
-
-      if (currentAnnotationIndex !== -1) {
-        const existingAnnotation = humanAnnotations[currentAnnotationIndex];
-        if (existingAnnotation.gaze === gazeType) return prev;
-        
-        existingAnnotation.endFrame = currentFrame - 1;
-        
-        humanAnnotations.splice(currentAnnotationIndex + 1, 0, {
-          frame: currentFrame,
-          gaze: gazeType,
-          endFrame: null
-        });
-      } else {
-        if (humanAnnotations.length > 0) {
-          const lastAnnotation = humanAnnotations[humanAnnotations.length - 1];
-          if (lastAnnotation.endFrame === null) {
-            lastAnnotation.endFrame = currentFrame - 1;
-          }
-        }
-        humanAnnotations.push({
-          frame: currentFrame,
-          gaze: gazeType,
-          endFrame: null
-        });
-      }
-
-      return {
-        ...prev,
-        [humanKey]: humanAnnotations
-      };
+  // Handle frame navigation
+  const navigateFrames = useCallback((amount) => {
+    setCurrentFrame(prev => {
+      const next = prev + amount;
+      return Math.max(0, Math.min(next, totalFrames));
     });
-  }, [currentFrame, activeAnnotator]);
-
-  const startContinuousFrameAdvance = useCallback((amount: number) => {
-    if (keydownIntervalRef.current) return;
-    
-    const advance = () => {
-      setCurrentFrame(prev => {
-        const next = prev + amount;
-        return Math.max(0, Math.min(next, totalFrames));
-      });
-    };
-
-    advance();
-    keydownIntervalRef.current = setInterval(advance, 100);
   }, [totalFrames]);
 
-  const stopContinuousFrameAdvance = useCallback(() => {
-    if (keydownIntervalRef.current) {
-      clearInterval(keydownIntervalRef.current);
-      keydownIntervalRef.current = null;
-    }
-  }, []);
+  const addAnnotationAndAdvance = useCallback((value) => {
+    const annotationType = annotationPhase;
+    setAnnotations(prev => ({
+      ...prev,
+      [annotationType]: { ...prev[annotationType], [currentFrame]: value }
+    }));
+    navigateFrames(frameInterval);
+  }, [annotationPhase, currentFrame, frameInterval, navigateFrames]);
 
-  const startContinuousAnnotation = useCallback((human: number, gazeType: string) => {
-    if (keydownIntervalRef.current) return;
+  // Start continuous annotation
+  const startContinuousAnnotation = useCallback((value) => {
+    addAnnotationAndAdvance(value);
+    const interval = setInterval(() => {
+      addAnnotationAndAdvance(value);
+    }, 100);
+    setContinuousAnnotationInterval(interval);
+  }, [addAnnotationAndAdvance]);
+
+  // Stop continuous annotation
+  const stopContinuousAnnotation = useCallback(() => {
+    if (continuousAnnotationInterval) {
+      clearInterval(continuousAnnotationInterval);
+      setContinuousAnnotationInterval(null);
+    }
+  }, [continuousAnnotationInterval]);
+
+  // Handle keyboard controls
+  const handleKeyDown = useCallback((event) => {
+    if (event.repeat) return; // Prevent multiple keydown events while holding
+
+    if (event.code === 'ArrowLeft') {
+      navigateFrames(-frameInterval);
+    } else if (event.code === 'ArrowRight') {
+      navigateFrames(frameInterval);
+    }
     
-    const annotate = () => {
-      addAnnotation(human, gazeType);
-      setCurrentFrame(prev => Math.min(totalFrames, prev + 1));
-    };
-    
-    annotate();
-    keydownIntervalRef.current = setInterval(annotate, 100);
-  }, [addAnnotation, totalFrames]);
-
-  const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    switch (event.code) {
-      case 'Space':
-        event.preventDefault();
-        startContinuousFrameAdvance(frameInterval);
-        break;
-      case 'ArrowLeft':
-        event.preventDefault();
-        startContinuousFrameAdvance(event.shiftKey ? -10 : -1);
-        break;
-      case 'ArrowRight':
-        event.preventDefault();
-        startContinuousFrameAdvance(event.shiftKey ? 10 : 1);
-        break;
-      case 'Digit1':
-        if (!event.repeat) startContinuousAnnotation(1, GAZE_TYPES.HUMAN.value);
-        break;
-      case 'Digit2':
-        if (!event.repeat) startContinuousAnnotation(1, GAZE_TYPES.SCREEN.value);
-        break;
-      case 'Digit3':
-        if (!event.repeat) startContinuousAnnotation(1, GAZE_TYPES.NEITHER.value);
-        break;
-      case 'Digit4':
-        if (!event.repeat) startContinuousAnnotation(2, GAZE_TYPES.HUMAN.value);
-        break;
-      case 'Digit5':
-        if (!event.repeat) startContinuousAnnotation(2, GAZE_TYPES.NEITHER.value);
-        break;
-      default:
-        break;
+    // Doctor phase controls
+    if (annotationPhase === 'doctor' && ['Digit1', 'Digit2', 'Digit3'].includes(event.code)) {
+      const value = parseInt(event.code.replace('Digit', ''));
+      startContinuousAnnotation(value);
     }
-  }, [frameInterval, startContinuousFrameAdvance, startContinuousAnnotation]);
-
-  const handleKeyUp = useCallback((event: KeyboardEvent) => {
-    if (['Space', 'ArrowLeft', 'ArrowRight', 'Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5'].includes(event.code)) {
-      stopContinuousFrameAdvance();
+    // Patient phase controls
+    else if (annotationPhase === 'patient' && ['Digit4', 'Digit5'].includes(event.code)) {
+      const value = parseInt(event.code.replace('Digit', ''));
+      startContinuousAnnotation(value);
     }
-  }, [stopContinuousFrameAdvance]);
+  }, [frameInterval, navigateFrames, annotationPhase, startContinuousAnnotation]);
 
+  // Handle key up to stop continuous annotation
+  const handleKeyUp = useCallback((event) => {
+    if (['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5'].includes(event.code)) {
+      stopContinuousAnnotation();
+    }
+  }, [stopContinuousAnnotation]);
+
+  // Set up keyboard listeners
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
-      stopContinuousFrameAdvance();
+      stopContinuousAnnotation();
     };
-  }, [handleKeyDown, handleKeyUp, stopContinuousFrameAdvance]);
+  }, [handleKeyDown, handleKeyUp, stopContinuousAnnotation]);
 
+  // Update video frame when currentFrame changes
   useEffect(() => {
     if (videoRef.current) {
-      const video = videoRef.current;
-      video.addEventListener('seeked', updateFrame);
-      video.addEventListener('loadeddata', updateFrame);
-      return () => {
-        video.removeEventListener('seeked', updateFrame);
-        video.removeEventListener('loadeddata', updateFrame);
-      };
+      videoRef.current.currentTime = currentFrame / 30;
+    }
+  }, [currentFrame]);
+
+  // Set up video event listeners
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.addEventListener('seeked', updateFrame);
+      return () => videoRef.current?.removeEventListener('seeked', updateFrame);
     }
   }, [updateFrame]);
 
-  useEffect(() => {
-    if (videoRef.current && typeof currentFrame === 'number') {
-      videoRef.current.currentTime = currentFrame / fps;
+  const calculateDetailedAccuracyStats = (userAnnotations, modelData, type) => {
+    if (!modelData || !userAnnotations || Object.keys(userAnnotations).length === 0) {
+      return null;
     }
-  }, [currentFrame, fps]);
 
-  const renderTimeline = (annotations: Array<{ frame: number; gaze: string; endFrame: number | null }>) => {
-    const width = 400; // Changed from 800 to 400
-    const height = 48;
-    
-    // Prevent division by zero and handle edge cases
-    const safeTotalFrames = Math.max(1, totalFrames);
-    
-    // Convert frame positions to SVG coordinates with safety checks and bounds
-    const getX = (frame: number): number => {
-      if (typeof frame !== 'number' || isNaN(frame)) return 0;
-      const safeFrame = Math.min(Math.max(0, frame), safeTotalFrames);
-      return Math.min(width, Math.floor((safeFrame / safeTotalFrames) * width));
+    const getModelGazeStatus = (frame, gazeRanges) => {
+      return gazeRanges.some(range => frame >= range.startFrame && frame <= range.endFrame);
     };
 
-    // Calculate proper end position for segments
-    const getSegmentWidth = (start: number, end: number | null): number => {
-      const startX = getX(start);
-      const currentX = getX(end ?? currentFrame);
-      
-      // Ensure the segment width is proportional and bounded
-      const maxWidth = width - startX;
-      const rawWidth = currentX - startX;
-      return Math.max(2, Math.min(maxWidth, rawWidth));
-    };
+    let metrics = {};
+    
+    if (type === 'doctor') {
+      // Initialize counters for doctor metrics
+      metrics = {
+        patientGaze: { correct: 0, total: 0 },
+        screenGaze: { correct: 0, total: 0 }
+      };
 
-    return (
-      <div className="w-full">
-        <svg 
-          width={width} 
-          height={height} 
-          viewBox={`0 0 ${width} ${height}`}
-          className="border border-gray-300 rounded-lg bg-gray-50"
-        >
-          <defs>
-            <clipPath id="timeline-clip">
-              <rect x="0" y="0" width={width} height={height} />
-            </clipPath>
-          </defs>
-          
-          <g clipPath="url(#timeline-clip)">
-            {/* Frame markers */}
-            {Array.from({ length: 11 }).map((_, i) => {
-              const frame = Math.floor((safeTotalFrames / 10) * i);
-              const x = getX(frame);
-              return (
-                <g key={i}>
-                  <line 
-                    x1={x.toString()} 
-                    y1="0" 
-                    x2={x.toString()} 
-                    y2={height.toString()} 
-                    stroke="rgba(0,0,0,0.1)" 
-                    strokeWidth="1"
-                  />
-                  <text 
-                    x={x.toString()} 
-                    y={(height - 4).toString()} 
-                    textAnchor="middle" 
-                    className="text-xs fill-gray-500"
-                  >
-                    {frame}
-                  </text>
-                </g>
-              );
-            })}
+      Object.entries(userAnnotations).forEach(([frame, value]) => {
+        const frameNum = parseInt(frame);
+        const modelPatientGaze = getModelGazeStatus(frameNum, modelData[1]?.manualAnnotations?.leftPersonGaze || []);
+        const userPatientGaze = value === 1;
+        const userScreenGaze = value === 2;
 
-            {/* Annotation segments */}
-            {annotations.map((anno, idx) => {
-              const startX = getX(anno.frame);
-              const segmentWidth = getSegmentWidth(anno.frame, anno.endFrame);
-              
-              // Skip if the segment would be outside the visible area
-              if (startX >= width || segmentWidth <= 0) return null;
-              
-              let color;
-              switch(anno.gaze) {
-                case 'human':
-                  color = GAZE_TYPES.HUMAN.color;
-                  break;
-                case 'screen':
-                  color = GAZE_TYPES.SCREEN.color;
-                  break;
-                case 'neither':
-                  color = GAZE_TYPES.NEITHER.color;
-                  break;
-                default:
-                  color = '#6B7280';
-              }
+        // Patient gaze accuracy
+        if (userPatientGaze || modelPatientGaze) {
+          metrics.patientGaze.total++;
+          if (userPatientGaze === modelPatientGaze) {
+            metrics.patientGaze.correct++;
+          }
+        }
 
-              return (
-                <rect
-                  key={idx}
-                  x={startX.toString()}
-                  y="0"
-                  width={segmentWidth.toString()}
-                  height={height.toString()}
-                  fill={color}
-                  opacity="0.75"
-                >
-                  <title>{`Frame ${anno.frame} - ${anno.endFrame || 'current'}: ${anno.gaze}`}</title>
-                </rect>
-              );
-            })}
+        // Screen gaze accuracy
+        if (userScreenGaze) {
+          metrics.screenGaze.total++;
+          // Since we don't have screen gaze in model data, we'll count it when user annotates it
+          if (userScreenGaze && !modelPatientGaze) {
+            metrics.screenGaze.correct++;
+          }
+        }
+      });
+    } else {
+      // Initialize counter for patient metrics
+      metrics = {
+        doctorGaze: { correct: 0, total: 0 }
+      };
 
-            {/* Current frame marker */}
-            <line
-              x1={getX(currentFrame).toString()}
-              y1="0"
-              x2={getX(currentFrame).toString()}
-              y2={height.toString()}
-              stroke="#3B82F6"
-              strokeWidth="2"
-            />
-          </g>
-        </svg>
-        {/* Edit mode controls */}
-        {editMode && selectedSegment && (
-          <div className="mt-2 flex items-center gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                const annotation = findAnnotationAtFrame(selectedSegment.human, currentFrame);
-                if (annotation) {
-                  splitAnnotation(selectedSegment.human, annotation.id);
-                }
-              }}
-              className="flex items-center gap-1"
-            >
-              <Scissors className="h-4 w-4" />
-              Split
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => deleteAnnotation(selectedSegment.human, selectedSegment.id)}
-              className="flex items-center gap-1 text-red-600 hover:text-red-700"
-            >
-              <Trash2 className="h-4 w-4" />
-              Delete
-            </Button>
-          </div>
-        )}
-      </div>
-    );
+      Object.entries(userAnnotations).forEach(([frame, value]) => {
+        const frameNum = parseInt(frame);
+        const modelDoctorGaze = getModelGazeStatus(frameNum, modelData[1]?.manualAnnotations?.rightPersonGaze || []);
+        const userDoctorGaze = value === 4;
+
+        if (userDoctorGaze || modelDoctorGaze) {
+          metrics.doctorGaze.total++;
+          if (userDoctorGaze === modelDoctorGaze) {
+            metrics.doctorGaze.correct++;
+          }
+        }
+      });
+    }
+
+    return metrics;
   };
 
   return (
-    <Card className="w-full max-w-6xl mx-auto">
-      <CardContent className="p-6">
-        <div className="space-y-6">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
+    <div className="w-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-6">
+      <div className="space-y-6">
+        {/* Controls Guide */}
+        <div className="grid grid-cols-3 gap-8 p-4 bg-gray-50 rounded-lg">
+          <div>
+            <h4 className="font-medium mb-2">Navigation</h4>
+            <ul className="space-y-1 text-sm text-gray-600">
+              <li>←: Previous Frame</li>
+              <li>→: Next Frame</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-medium mb-2">Doctor Controls (First)</h4>
+            <ul className="space-y-1 text-sm text-gray-600">
+              <li>1: Looking at Patient</li>
+              <li>2: Looking at Screen</li>
+              <li>3: Looking Elsewhere</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-medium mb-2">Patient Controls (Second)</h4>
+            <ul className="space-y-1 text-sm text-gray-600">
+              <li>4: Looking at Doctor</li>
+              <li>5: Looking Elsewhere</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* File Upload and Controls */}
+        <div className="flex items-center gap-4">
+          <div className="flex gap-4 flex-wrap">
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Upload Video</label>
               <input
                 type="file"
                 accept="video/*"
                 onChange={handleFileUpload}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 
+                className="block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 
                          file:rounded-md file:border-0 file:text-sm file:font-semibold 
                          file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
               />
-              <Select
-                value={frameInterval.toString()}
-                onValueChange={(value) => setFrameInterval(parseInt(value))}
+            </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Upload Model Predictions</label>
+              <input
+                type="file"
+                accept=".json"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const text = await file.text();
+                    try {
+                      const data = JSON.parse(text);
+                      setModelData(data);
+                    } catch (error) {
+                      console.error('Error parsing JSON:', error);
+                      alert('Error parsing changes.json file');
+                    }
+                  }
+                }}
+                className="block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 
+                         file:rounded-md file:border-0 file:text-sm file:font-semibold 
+                         file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Frames per Click</label>
+              <select
+                value={frameInterval}
+                onChange={(e) => setFrameInterval(Number(e.target.value))}
+                className="block rounded-md border-gray-300 shadow-sm px-4 py-2"
               >
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Interval" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">1 frame</SelectItem>
-                  <SelectItem value="5">5 frames</SelectItem>
-                  <SelectItem value="10">10 frames</SelectItem>
-                  <SelectItem value="20">20 frames</SelectItem>
-                </SelectContent>
-              </Select>
+                <option value="1">1 frame</option>
+                <option value="10">10 frames</option>
+                <option value="20">20 frames</option>
+                <option value="50">50 frames</option>
+                <option value="200">200 frames</option>
+              </select>
             </div>
-            
-            {/* Edit mode toggle */}
-            <Button
-              variant={editMode ? "default" : "outline"}
-              onClick={() => {
-                setEditMode(!editMode);
-                setSelectedSegment(null);
-              }}
-              className="flex items-center gap-2"
-            >
-              <Edit2 className="h-4 w-4" />
-              {editMode ? "Exit Edit Mode" : "Edit Mode"}
-            </Button>
-          </div>
-
-          {/* Navigation Controls */}
-          <div className="flex justify-between items-center gap-4 mb-4">
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={() => setCurrentFrame(Math.max(0, currentFrame - 1))}
-                className="bg-gray-700 hover:bg-gray-600"
-                title="Previous frame (Left Arrow)"
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">&nbsp;</label>
+              <button 
+                onClick={() => {
+                  setAnnotations({ doctor: {}, patient: {} });
+                  setAnnotationPhase('doctor');
+                  setCurrentFrame(0);
+                  if (videoRef.current) {
+                    videoRef.current.currentTime = 0;
+                  }
+                }}
+                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
               >
-                Previous Frame
-              </Button>
-              <Button
-                onClick={() => setCurrentFrame(Math.min(totalFrames, currentFrame + 1))}
-                className="bg-gray-700 hover:bg-gray-600"
-                title="Next frame (Right Arrow or Space)"
-              >
-                Next Frame
-              </Button>
-              <Button
-                onClick={() => setCurrentFrame(Math.min(totalFrames, currentFrame + 10))}
-                className="bg-gray-700 hover:bg-gray-600"
-                title="Next 10 frames (Shift + Right)"
-              >
-                +10 Frames
-              </Button>
-            </div>
-          </div>
-
-          {/* Video Display */}
-          <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
-            <video
-              ref={videoRef}
-              className="hidden"
-              preload="auto"
-              playsInline
-            >
-              <source type="video/mp4" />
-            </video>
-            
-            <canvas 
-              ref={canvasRef}
-              className="w-full h-full object-contain bg-black"
-            />
-
-            <div className="absolute top-4 right-4 bg-black/70 text-white px-3 py-1 rounded-full text-sm">
-              <Camera className="inline-block mr-2 h-4 w-4" />
-              Frame: {currentFrame} / {totalFrames}
-            </div>
-          </div>
-
-          {/* Annotation Controls */}
-          <div className="grid grid-cols-2 gap-8">
-            {/* Doctor Controls */}
-            <div>
-              <h3 className="font-semibold mb-4 text-gray-800">Doctor Gaze</h3>
-              <div className="space-y-2">
-                <Button 
-                  onClick={() => addAnnotation(1, GAZE_TYPES.HUMAN.value)}
-                  className="w-full bg-green-500 hover:bg-green-600 text-white"
-                  title="Press 1"
-                >
-                  Looking at Patient (1)
-                </Button>
-                <Button 
-                  onClick={() => addAnnotation(1, GAZE_TYPES.SCREEN.value)}
-                  className="w-full bg-red-500 hover:bg-red-600 text-white"
-                  title="Press 2"
-                >
-                  Looking at Screen (2)
-                </Button>
-                <Button 
-                  onClick={() => addAnnotation(1, GAZE_TYPES.NEITHER.value)}
-                  className="w-full bg-yellow-500 hover:bg-yellow-600 text-white"
-                  title="Press 3"
-                >
-                  Looking Elsewhere (3)
-                </Button>
-              </div>
-              <div className="mt-4">
-                {renderTimeline(annotations.human1)}
-              </div>
-            </div>
-
-            {/* Patient Controls */}
-            <div>
-              <h3 className="font-semibold mb-4 text-gray-800">Patient Gaze</h3>
-              <div className="space-y-2">
-                <Button 
-                  onClick={() => addAnnotation(2, GAZE_TYPES.HUMAN.value)}
-                  className="w-full bg-green-500 hover:bg-green-600 text-white"
-                  title="Press 4"
-                >
-                  Looking at Doctor (4)
-                </Button>
-                <Button 
-                  onClick={() => addAnnotation(2, GAZE_TYPES.NEITHER.value)}
-                  className="w-full bg-yellow-500 hover:bg-yellow-600 text-white"
-                  title="Press 5"
-                >
-                  Looking Elsewhere (5)
-                </Button>
-              </div>
-              <div className="mt-4">
-                {renderTimeline(annotations.human2)}
-              </div>
-            </div>
-          </div>
-
-          {/* Keyboard Shortcuts Guide */}
-          <div className="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <h3 className="font-semibold mb-4 text-gray-800">Keyboard Shortcuts</h3>
-            <div className="grid grid-cols-3 gap-8">
-              <div>
-                <h4 className="font-medium mb-2 text-gray-700">Navigation</h4>
-                <ul className="space-y-1 text-sm text-gray-600">
-                  <li>Space: Next Frame (hold to advance)</li>
-                  <li>← →: Previous/Next Frame (hold to continue)</li>
-                  <li>Shift + ← →: ±10 Frames (hold to continue)</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-medium mb-2 text-gray-700">Doctor Annotations</h4>
-                <ul className="space-y-1 text-sm text-gray-600">
-                  <li>1: Looking at Patient (hold to continue)</li>
-                  <li>2: Looking at Screen (hold to continue)</li>
-                  <li>3: Looking Elsewhere (hold to continue)</li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-medium mb-2 text-gray-700">Patient Annotations</h4>
-                <ul className="space-y-1 text-sm text-gray-600">
-                  <li>4: Looking at Doctor (hold to continue)</li>
-                  <li>5: Looking Elsewhere (hold to continue)</li>
-                </ul>
-              </div>
+                Reset Annotations
+              </button>
             </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+
+        {/* Video Display */}
+        <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
+          <video
+            ref={videoRef}
+            className="hidden"
+            preload="auto"
+            playsInline
+          >
+            <source type="video/mp4" />
+          </video>
+          
+          <canvas 
+            ref={canvasRef}
+            className="w-full h-full object-contain bg-black"
+          />
+
+          <div className="absolute top-4 right-4 bg-black/70 text-white px-3 py-1 rounded-full text-sm">
+            <Camera className="inline-block mr-2 h-4 w-4" />
+            Frame: {currentFrame} / {totalFrames}
+          </div>
+        </div>
+
+        {/* Phase Controls */}
+        <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold mb-2">
+              Currently Annotating: {annotationPhase === 'doctor' ? 'Doctor Gaze' : 'Patient Gaze'}
+            </h3>
+            <p className="text-sm text-gray-600">
+              {annotationPhase === 'doctor' 
+                ? 'Hold 1-3 to continuously annotate frames' 
+                : 'Hold 4-5 to continuously annotate frames'}
+            </p>
+          </div>
+          <button 
+            onClick={() => {
+              setAnnotationPhase(phase => phase === 'doctor' ? 'patient' : 'doctor');
+              setCurrentFrame(0);
+              if (videoRef.current) {
+                videoRef.current.currentTime = 0;
+              }
+            }}
+            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+          >
+            Switch to {annotationPhase === 'doctor' ? 'Patient' : 'Doctor'} Phase
+          </button>
+        </div>
+
+        {/* Timeline Visualization */}
+        {video && (
+          <div className="p-6 bg-white rounded-lg shadow-sm border border-gray-200">
+            <h3 className="text-xl font-semibold mb-6">Annotation Timeline</h3>
+            <TimelineVisualization 
+              manualAnnotations={annotations}
+              modelData={modelData}
+              totalFrames={totalFrames}
+            />
+          </div>
+        )}
+
+        {/* Accuracy Statistics */}
+        {modelData && (
+          <div className="p-6 bg-white rounded-lg shadow-sm border border-gray-200">
+            <h3 className="text-xl font-semibold mb-6">Annotation Accuracy Metrics</h3>
+            
+            {/* Doctor Metrics */}
+            <div className="mb-8">
+              <h4 className="text-lg font-medium mb-4 text-gray-800">Doctor Gaze Accuracy</h4>
+              <div className="space-y-4">
+                {/* Patient Gaze */}
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-700">Looking at Patient</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      {(() => {
+                        const stats = calculateDetailedAccuracyStats(annotations.doctor, modelData, 'doctor');
+                        if (!stats?.patientGaze.total) return '0%';
+                        return `${((stats.patientGaze.correct / stats.patientGaze.total) * 100).toFixed(1)}%`;
+                      })()}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div 
+                      className="bg-green-600 h-2.5 rounded-full transition-all duration-300"
+                      style={{
+                        width: (() => {
+                          const stats = calculateDetailedAccuracyStats(annotations.doctor, modelData, 'doctor');
+                          if (!stats?.patientGaze.total) return '0%';
+                          return `${(stats.patientGaze.correct / stats.patientGaze.total) * 100}%`;
+                        })()
+                      }}
+                    ></div>
+                  </div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    {(() => {
+                      const stats = calculateDetailedAccuracyStats(annotations.doctor, modelData, 'doctor');
+                      if (!stats?.patientGaze.total) return 'No annotations';
+                      return `${stats.patientGaze.correct} correct out of ${stats.patientGaze.total} annotations`;
+                    })()}
+                  </div>
+                </div>
+
+                {/* Screen Gaze */}
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-700">Looking at Screen</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      {(() => {
+                        const stats = calculateDetailedAccuracyStats(annotations.doctor, modelData, 'doctor');
+                        if (!stats?.screenGaze.total) return '0%';
+                        return `${((stats.screenGaze.correct / stats.screenGaze.total) * 100).toFixed(1)}%`;
+                      })()}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div 
+                      className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                      style={{
+                        width: (() => {
+                          const stats = calculateDetailedAccuracyStats(annotations.doctor, modelData, 'doctor');
+                          if (!stats?.screenGaze.total) return '0%';
+                          return `${(stats.screenGaze.correct / stats.screenGaze.total) * 100}%`;
+                        })()
+                      }}
+                    ></div>
+                  </div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    {(() => {
+                      const stats = calculateDetailedAccuracyStats(annotations.doctor, modelData, 'doctor');
+                      if (!stats?.screenGaze.total) return 'No annotations';
+                      return `${stats.screenGaze.correct} correct out of ${stats.screenGaze.total} annotations`;
+                    })()}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Patient Metrics */}
+            <div>
+              <h4 className="text-lg font-medium mb-4 text-gray-800">Patient Gaze Accuracy</h4>
+              <div className="space-y-4">
+                {/* Doctor Gaze */}
+                <div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-700">Looking at Doctor</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      {(() => {
+                        const stats = calculateDetailedAccuracyStats(annotations.patient, modelData, 'patient');
+                        if (!stats?.doctorGaze.total) return '0%';
+                        return `${((stats.doctorGaze.correct / stats.doctorGaze.total) * 100).toFixed(1)}%`;
+                      })()}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2.5">
+                    <div 
+                      className="bg-purple-600 h-2.5 rounded-full transition-all duration-300"
+                      style={{
+                        width: (() => {
+                          const stats = calculateDetailedAccuracyStats(annotations.patient, modelData, 'patient');
+                          if (!stats?.doctorGaze.total) return '0%';
+                          return `${(stats.doctorGaze.correct / stats.doctorGaze.total) * 100}%`;
+                        })()
+                      }}
+                    ></div>
+                  </div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    {(() => {
+                      const stats = calculateDetailedAccuracyStats(annotations.patient, modelData, 'patient');
+                      if (!stats?.doctorGaze.total) return 'No annotations';
+                      return `${stats.doctorGaze.correct} correct out of ${stats.doctorGaze.total} annotations`;
+                    })()}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

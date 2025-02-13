@@ -1,0 +1,58 @@
+[
+  {
+    "timestamp": "total",
+    "change_type": "percentages",
+    "details": { "percentages": [69.37, 28.05, 2.57] }
+  },
+  {
+    "videoInfo": {
+      "duration": 41.43333333333333,
+      "frameRate": 30,
+      "totalFrames": 1243
+    },
+    "manualAnnotations": {
+      "leftPersonGaze": [
+        { "startFrame": 0, "endFrame": 333 },
+        { "startFrame": 336, "endFrame": 409 },
+        { "startFrame": 412, "endFrame": 1227 }
+      ],
+      "rightPersonGaze": [
+        { "startFrame": 126, "endFrame": 175 },
+        { "startFrame": 226, "endFrame": 249 },
+        { "startFrame": 286, "endFrame": 399 },
+        { "startFrame": 412, "endFrame": 451 },
+        { "startFrame": 758, "endFrame": 807 },
+        { "startFrame": 830, "endFrame": 849 },
+        { "startFrame": 900, "endFrame": 931 },
+        { "startFrame": 934, "endFrame": 939 },
+        { "startFrame": 950, "endFrame": 963 },
+        { "startFrame": 978, "endFrame": 985 },
+        { "startFrame": 990, "endFrame": 1065 },
+        { "startFrame": 1068, "endFrame": 1099 },
+        { "startFrame": 1114, "endFrame": 1121 },
+        { "startFrame": 1158, "endFrame": 1165 },
+        { "startFrame": 1176, "endFrame": 1183 },
+        { "startFrame": 1210, "endFrame": 1221 }
+      ],
+      "rightPersonScreen": [
+        { "startFrame": 0, "endFrame": 125 },
+        { "startFrame": 176, "endFrame": 225 },
+        { "startFrame": 250, "endFrame": 285 },
+        { "startFrame": 400, "endFrame": 411 },
+        { "startFrame": 452, "endFrame": 475 },
+        { "startFrame": 500, "endFrame": 757 },
+        { "startFrame": 808, "endFrame": 829 },
+        { "startFrame": 850, "endFrame": 899 },
+        { "startFrame": 932, "endFrame": 933 },
+        { "startFrame": 940, "endFrame": 949 },
+        { "startFrame": 964, "endFrame": 977 },
+        { "startFrame": 986, "endFrame": 989 },
+        { "startFrame": 1066, "endFrame": 1067 },
+        { "startFrame": 1100, "endFrame": 1113 },
+        { "startFrame": 1122, "endFrame": 1157 },
+        { "startFrame": 1166, "endFrame": 1175 },
+        { "startFrame": 1184, "endFrame": 1209 }
+      ]
+    }
+  }
+]
