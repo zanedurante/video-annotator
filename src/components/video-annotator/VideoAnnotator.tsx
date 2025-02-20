@@ -7,7 +7,7 @@ import TimelineVisualization from '../ui/TimelineVisualization';
 const VideoAnnotator = () => {
   const [currentFrame, setCurrentFrame] = useState(0);
   const [totalFrames, setTotalFrames] = useState(0);
-  const [frameInterval, setFrameInterval] = useState(50);
+  const [frameInterval, setFrameInterval] = useState(10);  // Changed default to 10
   const [annotationPhase, setAnnotationPhase] = useState('doctor'); // 'doctor' or 'patient'
   const [continuousAnnotationInterval, setContinuousAnnotationInterval] = useState(null);
   const [video, setVideo] = useState(null);
@@ -75,23 +75,33 @@ const VideoAnnotator = () => {
     });
   }, [totalFrames]);
 
-  const addAnnotationAndAdvance = useCallback((value) => {
+  const lastAnnotationRef = useRef(null);
+
+  // Add single annotation and store as last annotation
+  const addAnnotation = useCallback((value) => {
     const annotationType = annotationPhase;
     setAnnotations(prev => ({
       ...prev,
       [annotationType]: { ...prev[annotationType], [currentFrame]: value }
     }));
-    navigateFrames(frameInterval);
-  }, [annotationPhase, currentFrame, frameInterval, navigateFrames]);
+    lastAnnotationRef.current = value;
+  }, [annotationPhase, currentFrame]);
 
-  // Start continuous annotation
-  const startContinuousAnnotation = useCallback((value) => {
-    addAnnotationAndAdvance(value);
+  // Start continuous annotation with s key
+  const startContinuousAnnotation = useCallback(() => {
+    if (!lastAnnotationRef.current) return;
+    
+    // First add annotation to current frame
+    addAnnotation(lastAnnotationRef.current);
+    navigateFrames(frameInterval);
+
+    // Then start interval
     const interval = setInterval(() => {
-      addAnnotationAndAdvance(value);
+      addAnnotation(lastAnnotationRef.current);
+      navigateFrames(frameInterval);
     }, 100);
     setContinuousAnnotationInterval(interval);
-  }, [addAnnotationAndAdvance]);
+  }, [addAnnotation, navigateFrames, frameInterval]);
 
   // Stop continuous annotation
   const stopContinuousAnnotation = useCallback(() => {
@@ -109,23 +119,28 @@ const VideoAnnotator = () => {
       navigateFrames(-frameInterval);
     } else if (event.code === 'ArrowRight') {
       navigateFrames(frameInterval);
+    } else if (event.code === 'KeyS') {
+      event.preventDefault();
+      startContinuousAnnotation();
     }
     
     // Doctor phase controls
     if (annotationPhase === 'doctor' && ['Digit1', 'Digit2', 'Digit3'].includes(event.code)) {
       const value = parseInt(event.code.replace('Digit', ''));
-      startContinuousAnnotation(value);
+      addAnnotation(value);
+      navigateFrames(frameInterval);
     }
     // Patient phase controls
     else if (annotationPhase === 'patient' && ['Digit4', 'Digit5'].includes(event.code)) {
       const value = parseInt(event.code.replace('Digit', ''));
-      startContinuousAnnotation(value);
+      addAnnotation(value);
+      navigateFrames(frameInterval);
     }
-  }, [frameInterval, navigateFrames, annotationPhase, startContinuousAnnotation]);
+  }, [frameInterval, navigateFrames, annotationPhase, addAnnotation, startContinuousAnnotation]);
 
   // Handle key up to stop continuous annotation
   const handleKeyUp = useCallback((event) => {
-    if (['Digit1', 'Digit2', 'Digit3', 'Digit4', 'Digit5'].includes(event.code)) {
+    if (event.code === 'KeyS') {
       stopContinuousAnnotation();
     }
   }, [stopContinuousAnnotation]);
@@ -177,6 +192,7 @@ const VideoAnnotator = () => {
       Object.entries(userAnnotations).forEach(([frame, value]) => {
         const frameNum = parseInt(frame);
         const modelPatientGaze = getModelGazeStatus(frameNum, modelData[1]?.manualAnnotations?.leftPersonGaze || []);
+        const modelScreenGaze = getModelGazeStatus(frameNum, modelData[1]?.manualAnnotations?.rightPersonScreen || []);
         const userPatientGaze = value === 1;
         const userScreenGaze = value === 2;
 
@@ -189,10 +205,9 @@ const VideoAnnotator = () => {
         }
 
         // Screen gaze accuracy
-        if (userScreenGaze) {
+        if (userScreenGaze || modelScreenGaze) {
           metrics.screenGaze.total++;
-          // Since we don't have screen gaze in model data, we'll count it when user annotates it
-          if (userScreenGaze && !modelPatientGaze) {
+          if (userScreenGaze === modelScreenGaze) {
             metrics.screenGaze.correct++;
           }
         }
@@ -349,8 +364,8 @@ const VideoAnnotator = () => {
             </h3>
             <p className="text-sm text-gray-600">
               {annotationPhase === 'doctor' 
-                ? 'Hold 1-3 to continuously annotate frames' 
-                : 'Hold 4-5 to continuously annotate frames'}
+                ? 'Press 1-3 to annotate frames' 
+                : 'Press 4-5 to annotate frames'}
             </p>
           </div>
           <button 
@@ -496,6 +511,32 @@ const VideoAnnotator = () => {
             </div>
           </div>
         )}
+
+        {/* Controls Guide */}
+        <div className="grid grid-cols-3 gap-8 p-4 bg-gray-50 rounded-lg">
+          <div>
+            <h4 className="font-medium mb-2">Navigation</h4>
+            <ul className="space-y-1 text-sm text-gray-600">
+              <li>←: Previous Frame</li>
+              <li>→: Next Frame</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-medium mb-2">Doctor Controls (First)</h4>
+            <ul className="space-y-1 text-sm text-gray-600">
+              <li>1: Looking at Patient</li>
+              <li>2: Looking at Screen</li>
+              <li>3: Looking Elsewhere</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-medium mb-2">Patient Controls (Second)</h4>
+            <ul className="space-y-1 text-sm text-gray-600">
+              <li>4: Looking at Doctor</li>
+              <li>5: Looking Elsewhere</li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   );
