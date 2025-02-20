@@ -19,6 +19,7 @@ const VideoAnnotator = () => {
   
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const lastAnnotationRef = useRef(null);
 
   // Handle video file upload
   const handleFileUpload = async (event) => {
@@ -75,8 +76,6 @@ const VideoAnnotator = () => {
     });
   }, [totalFrames]);
 
-  const lastAnnotationRef = useRef(null);
-
   // Add single annotation and store as last annotation
   const addAnnotation = useCallback((value) => {
     const annotationType = annotationPhase;
@@ -91,17 +90,22 @@ const VideoAnnotator = () => {
   const startContinuousAnnotation = useCallback(() => {
     if (!lastAnnotationRef.current) return;
     
-    // First add annotation to current frame
-    addAnnotation(lastAnnotationRef.current);
-    navigateFrames(frameInterval);
-
-    // Then start interval
-    const interval = setInterval(() => {
-      addAnnotation(lastAnnotationRef.current);
+    const advanceFrameAndAnnotate = () => {
+      // Add annotation to current frame if not already annotated
+      if (!annotations[annotationPhase][currentFrame]) {
+        addAnnotation(lastAnnotationRef.current);
+      }
       navigateFrames(frameInterval);
-    }, 100);
+    };
+    
+    // Start interval for continuous advancing and annotation
+    const interval = setInterval(advanceFrameAndAnnotate, 50); // Run every 50ms for smooth advancement
     setContinuousAnnotationInterval(interval);
-  }, [addAnnotation, navigateFrames, frameInterval]);
+    
+    // Immediately start advancing
+    advanceFrameAndAnnotate();
+    
+  }, [addAnnotation, navigateFrames, frameInterval, annotations, annotationPhase, currentFrame]);
 
   // Stop continuous annotation
   const stopContinuousAnnotation = useCallback(() => {
@@ -183,7 +187,6 @@ const VideoAnnotator = () => {
     let metrics = {};
     
     if (type === 'doctor') {
-      // Initialize counters for doctor metrics
       metrics = {
         patientGaze: { correct: 0, total: 0 },
         screenGaze: { correct: 0, total: 0 }
@@ -196,7 +199,6 @@ const VideoAnnotator = () => {
         const userPatientGaze = value === 1;
         const userScreenGaze = value === 2;
 
-        // Patient gaze accuracy
         if (userPatientGaze || modelPatientGaze) {
           metrics.patientGaze.total++;
           if (userPatientGaze === modelPatientGaze) {
@@ -204,7 +206,6 @@ const VideoAnnotator = () => {
           }
         }
 
-        // Screen gaze accuracy
         if (userScreenGaze || modelScreenGaze) {
           metrics.screenGaze.total++;
           if (userScreenGaze === modelScreenGaze) {
@@ -213,7 +214,6 @@ const VideoAnnotator = () => {
         }
       });
     } else {
-      // Initialize counter for patient metrics
       metrics = {
         doctorGaze: { correct: 0, total: 0 }
       };
@@ -245,6 +245,7 @@ const VideoAnnotator = () => {
             <ul className="space-y-1 text-sm text-gray-600">
               <li>←: Previous Frame</li>
               <li>→: Next Frame</li>
+              <li>Hold S: Fast forward with last annotation</li>
             </ul>
           </div>
           <div>
@@ -519,6 +520,7 @@ const VideoAnnotator = () => {
             <ul className="space-y-1 text-sm text-gray-600">
               <li>←: Previous Frame</li>
               <li>→: Next Frame</li>
+              <li>Hold S: Fast forward with last annotation</li>
             </ul>
           </div>
           <div>
