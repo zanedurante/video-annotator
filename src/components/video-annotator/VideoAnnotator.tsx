@@ -297,7 +297,6 @@ const VideoAnnotator = () => {
       </div>
     );
   };
-
   const calculateDetailedAccuracyStats = (userAnnotations, modelData, type) => {
     if (
       !modelData ||
@@ -306,41 +305,51 @@ const VideoAnnotator = () => {
     ) {
       return null;
     }
-
+  
     const getModelGazeStatus = (frame, gazeRanges) => {
       return gazeRanges.some(
         (range) => frame >= range.startFrame && frame <= range.endFrame
       );
     };
-
+  
     let metrics = {};
-
+  
     if (type === "doctor") {
+      // Evaluating doctor gaze annotations
       metrics = {
         patientGaze: { correct: 0, total: 0 },
         screenGaze: { correct: 0, total: 0 },
       };
-
+  
       Object.entries(userAnnotations).forEach(([frame, value]) => {
         const frameNum = parseInt(frame);
+  
+        // FIXED: Check if doctor is looking at patient in model data
+        // Using rightPersonGaze for doctor looking at patient
         const modelPatientGaze = getModelGazeStatus(
           frameNum,
-          modelData[1]?.manualAnnotations?.leftPersonGaze || []
+          modelData[1]?.manualAnnotations?.rightPersonGaze || []
         );
+  
+        // Check if doctor is looking at screen in model data
         const modelScreenGaze = getModelGazeStatus(
           frameNum,
           modelData[1]?.manualAnnotations?.rightPersonScreen || []
         );
-        const userPatientGaze = value === 1;
-        const userScreenGaze = value === 2;
-
+  
+        // User's annotations
+        const userPatientGaze = value === 1; // User says doctor is looking at patient
+        const userScreenGaze = value === 2; // User says doctor is looking at screen
+  
+        // Calculate accuracy for patient gaze
         if (userPatientGaze || modelPatientGaze) {
           metrics.patientGaze.total++;
           if (userPatientGaze === modelPatientGaze) {
             metrics.patientGaze.correct++;
           }
         }
-
+  
+        // Calculate accuracy for screen gaze
         if (userScreenGaze || modelScreenGaze) {
           metrics.screenGaze.total++;
           if (userScreenGaze === modelScreenGaze) {
@@ -349,18 +358,25 @@ const VideoAnnotator = () => {
         }
       });
     } else {
+      // Evaluating patient gaze annotations
       metrics = {
         doctorGaze: { correct: 0, total: 0 },
       };
-
+  
       Object.entries(userAnnotations).forEach(([frame, value]) => {
         const frameNum = parseInt(frame);
+  
+        // FIXED: Check if patient is looking at doctor in model data
+        // Using leftPersonGaze for patient looking at doctor
         const modelDoctorGaze = getModelGazeStatus(
           frameNum,
-          modelData[1]?.manualAnnotations?.rightPersonGaze || []
+          modelData[1]?.manualAnnotations?.leftPersonGaze || []
         );
-        const userDoctorGaze = value === 4;
-
+  
+        // User's annotations
+        const userDoctorGaze = value === 4; // User says patient is looking at doctor
+  
+        // Calculate accuracy for doctor gaze
         if (userDoctorGaze || modelDoctorGaze) {
           metrics.doctorGaze.total++;
           if (userDoctorGaze === modelDoctorGaze) {
@@ -369,7 +385,7 @@ const VideoAnnotator = () => {
         }
       });
     }
-
+  
     return metrics;
   };
 

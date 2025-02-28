@@ -42,10 +42,11 @@ const TimelineVisualization = ({
       ctx.globalAlpha = 0.8;
       
       if (type === 'doctor') {
-        // Process patient gaze ranges (doctor looking at patient)
-        if (leftPersonGaze) {
+        // FIXED: Process patient gaze ranges (doctor looking at patient)
+        // Using rightPersonGaze for doctor looking at patient
+        if (rightPersonGaze) {
           ctx.fillStyle = '#16a34a'; // Darker Green (green-600)
-          leftPersonGaze.forEach(range => {
+          rightPersonGaze.forEach(range => {
             const startX = (range.startFrame / totalFrames) * width;
             const endX = (range.endFrame / totalFrames) * width;
             const barWidth = Math.max(1, endX - startX); // Ensure at least 1px width
@@ -64,10 +65,11 @@ const TimelineVisualization = ({
           });
         }
       } else {
-        // Process doctor gaze ranges (patient looking at doctor)
-        if (rightPersonGaze) {
+        // FIXED: Process doctor gaze ranges (patient looking at doctor)
+        // Using leftPersonGaze for patient looking at doctor
+        if (leftPersonGaze) {
           ctx.fillStyle = '#a855f7'; // Purple
-          rightPersonGaze.forEach(range => {
+          leftPersonGaze.forEach(range => {
             const startX = (range.startFrame / totalFrames) * width;
             const endX = (range.endFrame / totalFrames) * width;
             const barWidth = Math.max(1, endX - startX); // Ensure at least 1px width
