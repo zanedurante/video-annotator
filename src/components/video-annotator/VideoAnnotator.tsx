@@ -390,7 +390,7 @@ const VideoAnnotator = () => {
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto bg-white rounded-lg shadow-lg">
+    <div className="w-full max-w-7xl mx-auto bg-white rounded-lg shadow-lg">
       <h2 className="text-2xl font-bold text-center py-4 border-b border-gray-200">
         Video Annotation Tool
       </h2>
@@ -437,7 +437,7 @@ const VideoAnnotator = () => {
           </div>
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
-              Frames per Click
+              Frames skipped per annotation
             </label>
             <select
               value={frameInterval}
