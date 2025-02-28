@@ -1,161 +1,226 @@
+import React, { useEffect, useRef } from 'react';
+
 const TimelineVisualization = ({ 
   manualAnnotations, 
   modelData, 
-  totalFrames 
+  totalFrames,
+  annotationPhase // Add this parameter to know which timeline is active
 }) => {
-  // Process manual annotations to only fill until next annotation
-  const processManualAnnotations = (annotations) => {
-    if (!annotations || Object.keys(annotations).length === 0) return [];
+  if (!totalFrames) return null;
 
-    // Convert object to sorted array of keyframes
-    const keyframes = Object.entries(annotations)
-      .map(([frame, value]) => ({ frame: parseInt(frame), value }))
-      .sort((a, b) => a.frame - b.startFrame);
+  // Refs for the canvas elements
+  const doctorCanvasRef = useRef(null);
+  const patientCanvasRef = useRef(null);
+  const aiDoctorCanvasRef = useRef(null);
+  const aiPatientCanvasRef = useRef(null);
 
-    // Create segments between keyframes
-    let segments = [];
-    for (let i = 0; i < keyframes.length; i++) {
-      const current = keyframes[i];
-      const next = keyframes[i + 1];
+  // Draw annotations on canvas
+  const drawAnnotations = (canvas, annotations, type, isAI = false) => {
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    // Clear the canvas
+    ctx.clearRect(0, 0, width, height);
+    
+    // Set background
+    ctx.fillStyle = '#e5e7eb'; // Light gray (matching the bg-gray-200 class)
+    ctx.fillRect(0, 0, width, height);
+    
+    if (!annotations || (typeof annotations === 'object' && Object.keys(annotations).length === 0)) {
+      return;
+    }
+    
+    if (isAI) {
+      // For AI predictions, draw continuous ranges
+      const { leftPersonGaze, rightPersonGaze, rightPersonScreen } = 
+        modelData?.[1]?.manualAnnotations || {};
       
-      // If there's a next keyframe, fill until that one
-      // If not, just show this frame as a small segment
-      const endFrame = next ? next.frame - 1 : current.frame + 1;
-
-      segments.push({
-        startFrame: current.frame,
-        endFrame: endFrame,
-        value: current.value
+      // Set transparency for AI predictions
+      ctx.globalAlpha = 0.8;
+      
+      if (type === 'doctor') {
+        // Process patient gaze ranges (doctor looking at patient)
+        if (leftPersonGaze) {
+          ctx.fillStyle = '#16a34a'; // Darker Green (green-600)
+          leftPersonGaze.forEach(range => {
+            const startX = (range.startFrame / totalFrames) * width;
+            const endX = (range.endFrame / totalFrames) * width;
+            const barWidth = Math.max(1, endX - startX); // Ensure at least 1px width
+            ctx.fillRect(startX, 0, barWidth, height);
+          });
+        }
+        
+        // Process screen gaze ranges (doctor looking at screen)
+        if (rightPersonScreen) {
+          ctx.fillStyle = '#3b82f6'; // Blue
+          rightPersonScreen.forEach(range => {
+            const startX = (range.startFrame / totalFrames) * width;
+            const endX = (range.endFrame / totalFrames) * width;
+            const barWidth = Math.max(1, endX - startX); // Ensure at least 1px width
+            ctx.fillRect(startX, 0, barWidth, height);
+          });
+        }
+      } else {
+        // Process doctor gaze ranges (patient looking at doctor)
+        if (rightPersonGaze) {
+          ctx.fillStyle = '#a855f7'; // Purple
+          rightPersonGaze.forEach(range => {
+            const startX = (range.startFrame / totalFrames) * width;
+            const endX = (range.endFrame / totalFrames) * width;
+            const barWidth = Math.max(1, endX - startX); // Ensure at least 1px width
+            ctx.fillRect(startX, 0, barWidth, height);
+          });
+        }
+      }
+      
+      // Reset alpha
+      ctx.globalAlpha = 1.0;
+    } else {
+      // For manual annotations, draw consistent 1px vertical lines
+      // Group annotations by value to avoid redrawing same color multiple times
+      const annotationsByValue = {};
+      
+      if (type === 'doctor') {
+        // Initialize value groups for doctor
+        annotationsByValue[1] = []; // Looking at patient
+        annotationsByValue[2] = []; // Looking at screen
+        annotationsByValue[3] = []; // Looking elsewhere
+      } else {
+        // Initialize value groups for patient
+        annotationsByValue[4] = []; // Looking at doctor
+        annotationsByValue[5] = []; // Looking elsewhere
+      }
+      
+      // Group frames by annotation value
+      Object.entries(annotations).forEach(([frame, value]) => {
+        if (annotationsByValue[value]) {
+          annotationsByValue[value].push(parseInt(frame));
+        }
+      });
+      
+      // Draw each group with its color
+      Object.entries(annotationsByValue).forEach(([value, frames]) => {
+        // Set color based on value and type
+        if (type === 'doctor') {
+          switch(parseInt(value)) {
+            case 1: ctx.fillStyle = '#16a34a'; break; // Darker Green (green-600)
+            case 2: ctx.fillStyle = '#3b82f6'; break; // Blue
+            case 3: ctx.fillStyle = '#9ca3af'; break; // Gray
+            default: ctx.fillStyle = '#9ca3af';
+          }
+        } else {
+          switch(parseInt(value)) {
+            case 4: ctx.fillStyle = '#a855f7'; break; // Purple
+            case 5: ctx.fillStyle = '#9ca3af'; break; // Gray
+            default: ctx.fillStyle = '#9ca3af';
+          }
+        }
+        
+        // Draw all frames for this value
+        frames.forEach(frame => {
+          const x = Math.floor((frame / totalFrames) * width);
+          ctx.fillRect(x, 0, 2, height); // Increased to 2px width
+        });
       });
     }
-
-    return segments;
   };
 
-  // Process AI annotations from the model data
-  const processModelAnnotations = () => {
-    if (!modelData?.[1]?.manualAnnotations) return { doctor: [], patient: [] };
-
-    const { leftPersonGaze, rightPersonGaze, rightPersonScreen } = modelData[1].manualAnnotations;
-
-    // Process doctor segments
-    // Note: No need to process frame by frame, we can use the ranges directly
-    const doctorSegments = [
-      // Convert leftPersonGaze (looking at patient) to value 1 segments
-      ...(leftPersonGaze || []).map(range => ({
-        startFrame: range.startFrame,
-        endFrame: range.endFrame,
-        value: 1  // looking at patient
-      })),
-      // Convert rightPersonScreen (looking at screen) to value 2 segments
-      ...(rightPersonScreen || []).map(range => ({
-        startFrame: range.startFrame,
-        endFrame: range.endFrame,
-        value: 2  // looking at screen
-      }))
-    ].sort((a, b) => a.startFrame - b.startFrame);
-
-    // Process patient segments
-    // Convert rightPersonGaze (looking at doctor) to value 4 segments
-    const patientSegments = (rightPersonGaze || []).map(range => ({
-      startFrame: range.startFrame,
-      endFrame: range.endFrame,
-      value: 4  // looking at doctor
-    })).sort((a, b) => a.startFrame - b.startFrame);
-
-    return {
-      doctor: doctorSegments,
-      patient: patientSegments
-    };
-  };
-
-  const getSegmentColor = (value) => {
-    if (value === 1 || value === 4) {
-      return 'bg-green-500'; // Looking at person
-    } else if (value === 2) {
-      return 'bg-red-500';   // Looking at screen
-    } else {
-      return 'bg-gray-500';  // Looking elsewhere
+  // Effect to draw annotations when dependencies change
+  useEffect(() => {
+    if (doctorCanvasRef.current) {
+      drawAnnotations(doctorCanvasRef.current, manualAnnotations.doctor, 'doctor');
     }
-  };
+    if (patientCanvasRef.current) {
+      drawAnnotations(patientCanvasRef.current, manualAnnotations.patient, 'patient');
+    }
+    if (modelData && aiDoctorCanvasRef.current) {
+      drawAnnotations(aiDoctorCanvasRef.current, modelData, 'doctor', true);
+    }
+    if (modelData && aiPatientCanvasRef.current) {
+      drawAnnotations(aiPatientCanvasRef.current, modelData, 'patient', true);
+    }
+  }, [manualAnnotations, modelData, totalFrames]);
 
-  const manualDoctorSegments = processManualAnnotations(manualAnnotations.doctor, 'doctor');
-  const manualPatientSegments = processManualAnnotations(manualAnnotations.patient, 'patient');
-  const modelSegments = processModelAnnotations();
+  // Helper to determine if a timeline is currently active for annotation
+  const isActiveTimeline = (type) => {
+    return annotationPhase === type;
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
-        <h3 className="text-lg font-semibold mb-4">Doctor Gaze</h3>
-        {/* Manual Timeline */}
-        <div className="mb-2">
-          <div className="text-sm text-gray-600 mb-1">Manual Annotations</div>
-          <div className="h-6 w-full bg-gray-100 rounded-full relative">
-            {manualDoctorSegments.map((segment, index) => (
-              <div
-                key={index}
-                className={`absolute h-full ${getSegmentColor(segment.value)} transition-all`}
-                style={{
-                  left: `${(segment.startFrame / totalFrames) * 100}%`,
-                  width: `${((segment.endFrame - segment.startFrame + 1) / totalFrames) * 100}%`
-                }}
-              />
-            ))}
+        <div className="flex items-center mb-1">
+          <div className="text-sm font-medium text-gray-700 flex-grow flex items-center">
+            {isActiveTimeline('doctor') && (
+              <svg width="20" height="20" viewBox="0 0 24 24" className="text-blue-500 mr-1">
+                <path fill="currentColor" d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/>
+              </svg>
+            )}
+            Doctor Gaze Annotations
           </div>
+          
         </div>
-        {/* AI Timeline */}
-        <div>
-          <div className="text-sm text-gray-600 mb-1">AI Predictions</div>
-          <div className="h-6 w-full bg-gray-100 rounded-full relative">
-            {modelSegments.doctor.map((segment, index) => (
-              <div
-                key={index}
-                className={`absolute h-full ${getSegmentColor(segment.value)} transition-all`}
-                style={{
-                  left: `${(segment.startFrame / totalFrames) * 100}%`,
-                  width: `${((segment.endFrame - segment.startFrame + 1) / totalFrames) * 100}%`
-                }}
-              />
-            ))}
-          </div>
-        </div>
+        <canvas 
+          ref={doctorCanvasRef}
+          width={1000}
+          height={16}
+          className={`w-full h-4 rounded ${isActiveTimeline('doctor') ? 'ring-2 ring-blue-500' : ''}`}
+        />
       </div>
-
+      
       <div>
-        <h3 className="text-lg font-semibold mb-4">Patient Gaze</h3>
-        {/* Manual Timeline */}
-        <div className="mb-2">
-          <div className="text-sm text-gray-600 mb-1">Manual Annotations</div>
-          <div className="h-6 w-full bg-gray-100 rounded-full relative">
-            {manualPatientSegments.map((segment, index) => (
-              <div
-                key={index}
-                className={`absolute h-full ${getSegmentColor(segment.value, 'patient')} transition-all`}
-                style={{
-                  left: `${(segment.startFrame / totalFrames) * 100}%`,
-                  width: `${((segment.endFrame - segment.startFrame + 1) / totalFrames) * 100}%`
-                }}
-              />
-            ))}
+        <div className="flex items-center mb-1">
+          <div className="text-sm font-medium text-gray-700 flex-grow flex items-center">
+            {isActiveTimeline('patient') && (
+              <svg width="20" height="20" viewBox="0 0 24 24" className="text-blue-500 mr-1">
+                <path fill="currentColor" d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8-8-8z"/>
+              </svg>
+            )}
+            Patient Gaze Annotations
           </div>
         </div>
-        {/* AI Timeline */}
-        <div>
-          <div className="text-sm text-gray-600 mb-1">AI Predictions</div>
-          <div className="h-6 w-full bg-gray-100 rounded-full relative">
-            {modelSegments.patient.map((segment, index) => (
-              <div
-                key={index}
-                className={`absolute h-full ${getSegmentColor(segment.value, true)} transition-all`}
-                style={{
-                  left: `${(segment.startFrame / totalFrames) * 100}%`,
-                  width: `${((segment.endFrame - segment.startFrame + 1) / totalFrames) * 100}%`
-                }}
-              />
-            ))}
-          </div>
-        </div>
+        <canvas 
+          ref={patientCanvasRef}
+          width={1000}
+          height={16}
+          className={`w-full h-4 rounded ${isActiveTimeline('patient') ? 'ring-2 ring-blue-500' : ''}`}
+        />
       </div>
+      
+      {modelData && (
+        <>
+          <div>
+            <div className="flex items-center mb-1">
+              <div className="text-sm font-medium text-gray-700 flex-grow">
+                AI Doctor Gaze Predictions
+              </div>
+            </div>
+            <canvas 
+              ref={aiDoctorCanvasRef}
+              width={1000}
+              height={16}
+              className="w-full h-4 rounded"
+            />
+          </div>
+          
+          <div>
+            <div className="flex items-center mb-1">
+              <div className="text-sm font-medium text-gray-700 flex-grow">
+                AI Patient Gaze Predictions
+              </div>
+            </div>
+            <canvas 
+              ref={aiPatientCanvasRef}
+              width={1000}
+              height={16}
+              className="w-full h-4 rounded"
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 };
