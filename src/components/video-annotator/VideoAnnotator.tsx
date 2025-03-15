@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Camera } from "lucide-react";
+import { Camera, Save, Upload } from "lucide-react";
 import TimelineVisualization from "../ui/TimelineVisualization";
 
 const VideoAnnotator = () => {
@@ -12,6 +12,7 @@ const VideoAnnotator = () => {
   const [continuousAnnotationInterval, setContinuousAnnotationInterval] =
     useState(null);
   const [video, setVideo] = useState(null);
+  const [videoFileName, setVideoFileName] = useState("");
   const [modelData, setModelData] = useState(null);
   const [annotations, setAnnotations] = useState({
     doctor: {}, // Format: { frameNumber: annotationValue }
@@ -30,6 +31,7 @@ const VideoAnnotator = () => {
     try {
       const url = URL.createObjectURL(file);
       setVideo(url);
+      setVideoFileName(file.name);
 
       const videoEl = document.createElement("video");
       videoEl.src = url;
@@ -206,97 +208,314 @@ const VideoAnnotator = () => {
     }
   }, [updateFrame]);
 
-  // Render vertical bars for annotations
-  const renderAnnotationBars = () => {
-    if (!video || totalFrames === 0) return null;
-
-    const containerWidth = 100; // percentage-based width
-    const barWidth = 0.2; // percentage width of each bar
-
-    const doctorBars = Object.entries(annotations.doctor).map(
-      ([frame, value]) => {
-        const position = (parseInt(frame) / totalFrames) * containerWidth;
-        let color;
-
-        switch (value) {
-          case 1:
-            color = "#16a34a";
-            break; // green for looking at patient
-          case 2:
-            color = "#3b82f6";
-            break; // blue for looking at screen
-          case 3:
-            color = "#9ca3af";
-            break; // gray for looking elsewhere
-          default:
-            color = "#9ca3af";
+  // Convert annotations to model-compatible format for saving
+  const convertAnnotationsToModelFormat = () => {
+    // Process doctor gaze annotations
+    const doctorPatientGazeRanges = [];
+    const doctorScreenGazeRanges = [];
+    const doctorElsewhereGazeRanges = [];
+    
+    // Process patient gaze annotations
+    const patientDoctorGazeRanges = [];
+    const patientElsewhereGazeRanges = [];
+    
+    // Temporary arrays to store continuous ranges of frames
+    let currentPatientRange = null;
+    let currentScreenRange = null;
+    let currentDoctorElsewhereRange = null;
+    let currentPatientDoctorRange = null;
+    let currentPatientElsewhereRange = null;
+    
+    // Sort frames numerically
+    const doctorFrames = Object.keys(annotations.doctor)
+      .map(Number)
+      .sort((a, b) => a - b);
+    
+    // Process each doctor frame
+    doctorFrames.forEach((frame) => {
+      const value = annotations.doctor[frame];
+      
+      // Process doctor looking at patient (value 1)
+      if (value === 1) {
+        if (!currentPatientRange) {
+          currentPatientRange = { startFrame: frame, endFrame: frame };
+        } else if (frame === currentPatientRange.endFrame + 1) {
+          // Extend the range if frames are consecutive
+          currentPatientRange.endFrame = frame;
+        } else {
+          // Save the current range and start a new one
+          doctorPatientGazeRanges.push(currentPatientRange);
+          currentPatientRange = { startFrame: frame, endFrame: frame };
         }
-
-        return (
-          <div
-            key={`doctor-${frame}`}
-            className="absolute h-full"
-            style={{
-              left: `${position}%`,
-              width: `${barWidth}%`,
-              backgroundColor: color,
-            }}
-          />
-        );
-      }
-    );
-
-    const patientBars = Object.entries(annotations.patient).map(
-      ([frame, value]) => {
-        const position = (parseInt(frame) / totalFrames) * containerWidth;
-        let color;
-
-        switch (value) {
-          case 4:
-            color = "#a855f7";
-            break; // purple for looking at doctor
-          case 5:
-            color = "#9ca3af";
-            break; // gray for looking elsewhere
-          default:
-            color = "#9ca3af";
+        
+        // End other ranges if active
+        if (currentScreenRange) {
+          doctorScreenGazeRanges.push(currentScreenRange);
+          currentScreenRange = null;
         }
-
-        return (
-          <div
-            key={`patient-${frame}`}
-            className="absolute h-full"
-            style={{
-              left: `${position}%`,
-              width: `${barWidth}%`,
-              backgroundColor: color,
-            }}
-          />
-        );
+        if (currentDoctorElsewhereRange) {
+          doctorElsewhereGazeRanges.push(currentDoctorElsewhereRange);
+          currentDoctorElsewhereRange = null;
+        }
+      } 
+      // Process doctor looking at screen (value 2)
+      else if (value === 2) {
+        if (!currentScreenRange) {
+          currentScreenRange = { startFrame: frame, endFrame: frame };
+        } else if (frame === currentScreenRange.endFrame + 1) {
+          // Extend the range if frames are consecutive
+          currentScreenRange.endFrame = frame;
+        } else {
+          // Save the current range and start a new one
+          doctorScreenGazeRanges.push(currentScreenRange);
+          currentScreenRange = { startFrame: frame, endFrame: frame };
+        }
+        
+        // End other ranges if active
+        if (currentPatientRange) {
+          doctorPatientGazeRanges.push(currentPatientRange);
+          currentPatientRange = null;
+        }
+        if (currentDoctorElsewhereRange) {
+          doctorElsewhereGazeRanges.push(currentDoctorElsewhereRange);
+          currentDoctorElsewhereRange = null;
+        }
       }
-    );
-
-    return (
-      <div className="w-full mb-4">
-        <div className="mb-2">
-          <h4 className="text-sm font-medium text-gray-700">
-            Doctor Gaze Annotations
-          </h4>
-          <div className="relative h-4 w-full bg-gray-200 rounded overflow-hidden">
-            {doctorBars}
-          </div>
-        </div>
-        <div>
-          <h4 className="text-sm font-medium text-gray-700">
-            Patient Gaze Annotations
-          </h4>
-          <div className="relative h-4 w-full bg-gray-200 rounded overflow-hidden">
-            {patientBars}
-          </div>
-        </div>
-      </div>
-    );
+      // Process doctor looking elsewhere (value 3)
+      else if (value === 3) {
+        if (!currentDoctorElsewhereRange) {
+          currentDoctorElsewhereRange = { startFrame: frame, endFrame: frame };
+        } else if (frame === currentDoctorElsewhereRange.endFrame + 1) {
+          // Extend the range if frames are consecutive
+          currentDoctorElsewhereRange.endFrame = frame;
+        } else {
+          // Save the current range and start a new one
+          doctorElsewhereGazeRanges.push(currentDoctorElsewhereRange);
+          currentDoctorElsewhereRange = { startFrame: frame, endFrame: frame };
+        }
+        
+        // End other ranges if active
+        if (currentPatientRange) {
+          doctorPatientGazeRanges.push(currentPatientRange);
+          currentPatientRange = null;
+        }
+        if (currentScreenRange) {
+          doctorScreenGazeRanges.push(currentScreenRange);
+          currentScreenRange = null;
+        }
+      }
+    });
+    
+    // Add any remaining doctor ranges
+    if (currentPatientRange) doctorPatientGazeRanges.push(currentPatientRange);
+    if (currentScreenRange) doctorScreenGazeRanges.push(currentScreenRange);
+    if (currentDoctorElsewhereRange) doctorElsewhereGazeRanges.push(currentDoctorElsewhereRange);
+    
+    // Sort frames numerically for patients
+    const patientFrames = Object.keys(annotations.patient)
+      .map(Number)
+      .sort((a, b) => a - b);
+    
+    // Process each patient frame
+    patientFrames.forEach((frame) => {
+      const value = annotations.patient[frame];
+      
+      // Process patient looking at doctor (value 4)
+      if (value === 4) {
+        if (!currentPatientDoctorRange) {
+          currentPatientDoctorRange = { startFrame: frame, endFrame: frame };
+        } else if (frame === currentPatientDoctorRange.endFrame + 1) {
+          // Extend the range if frames are consecutive
+          currentPatientDoctorRange.endFrame = frame;
+        } else {
+          // Save the current range and start a new one
+          patientDoctorGazeRanges.push(currentPatientDoctorRange);
+          currentPatientDoctorRange = { startFrame: frame, endFrame: frame };
+        }
+        
+        // End other ranges if active
+        if (currentPatientElsewhereRange) {
+          patientElsewhereGazeRanges.push(currentPatientElsewhereRange);
+          currentPatientElsewhereRange = null;
+        }
+      } 
+      // Process patient looking elsewhere (value 5)
+      else if (value === 5) {
+        if (!currentPatientElsewhereRange) {
+          currentPatientElsewhereRange = { startFrame: frame, endFrame: frame };
+        } else if (frame === currentPatientElsewhereRange.endFrame + 1) {
+          // Extend the range if frames are consecutive
+          currentPatientElsewhereRange.endFrame = frame;
+        } else {
+          // Save the current range and start a new one
+          patientElsewhereGazeRanges.push(currentPatientElsewhereRange);
+          currentPatientElsewhereRange = { startFrame: frame, endFrame: frame };
+        }
+        
+        // End other ranges if active
+        if (currentPatientDoctorRange) {
+          patientDoctorGazeRanges.push(currentPatientDoctorRange);
+          currentPatientDoctorRange = null;
+        }
+      }
+    });
+    
+    // Add any remaining patient ranges
+    if (currentPatientDoctorRange) patientDoctorGazeRanges.push(currentPatientDoctorRange);
+    if (currentPatientElsewhereRange) patientElsewhereGazeRanges.push(currentPatientElsewhereRange);
+    
+    // Format the final output to match the model data structure
+    return [
+      {
+        videoFile: videoFileName,
+      },
+      {
+        manualAnnotations: {
+          // Following the naming convention in the model data
+          rightPersonGaze: doctorPatientGazeRanges,
+          rightPersonScreen: doctorScreenGazeRanges,
+          rightPersonElsewhere: doctorElsewhereGazeRanges,
+          leftPersonGaze: patientDoctorGazeRanges,
+          leftPersonElsewhere: patientElsewhereGazeRanges
+        }
+      }
+    ];
   };
+
+  // Save annotations as JSON
+  const saveAnnotations = () => {
+    if (!video || (Object.keys(annotations.doctor).length === 0 && Object.keys(annotations.patient).length === 0)) {
+      alert("No video or annotations to save.");
+      return;
+    }
+    
+    try {
+      // Convert annotations to the expected model format
+      const annotationsData = convertAnnotationsToModelFormat();
+      
+      // Create a Blob with the data
+      const blob = new Blob([JSON.stringify(annotationsData, null, 2)], { type: "application/json" });
+      
+      // Create a download link and trigger it
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const fileName = videoFileName ? `${videoFileName.split('.')[0]}_annotations.json` : "annotations.json";
+      
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      alert("Annotations saved successfully!");
+    } catch (error) {
+      console.error("Error saving annotations:", error);
+      alert("Error saving annotations. Please try again.");
+    }
+  };
+
+  // Load AI model predictions
+  const loadModelPredictions = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      
+      // Set model data for visualization and comparison only
+      setModelData(data);
+      
+      alert("AI model predictions loaded for comparison!");
+    } catch (error) {
+      console.error("Error loading model predictions:", error);
+      alert("Error loading model predictions. Please check the file format and try again.");
+    }
+    
+    // Reset the file input
+    event.target.value = null;
+  };
+
+  // Load user's previous annotations
+  const loadUserAnnotations = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      
+      // Convert the data to the frame-by-frame annotation format
+      const doctorAnnotations = {};
+      const patientAnnotations = {};
+      
+      // Extract data from the loaded file
+      const manualAnnotations = data[1]?.manualAnnotations;
+      
+      if (manualAnnotations) {
+        // Process doctor looking at patient ranges
+        if (manualAnnotations.rightPersonGaze) {
+          manualAnnotations.rightPersonGaze.forEach(range => {
+            for (let frame = range.startFrame; frame <= range.endFrame; frame++) {
+              doctorAnnotations[frame] = 1; // doctor looking at patient
+            }
+          });
+        }
+        
+        // Process doctor looking at screen ranges
+        if (manualAnnotations.rightPersonScreen) {
+          manualAnnotations.rightPersonScreen.forEach(range => {
+            for (let frame = range.startFrame; frame <= range.endFrame; frame++) {
+              doctorAnnotations[frame] = 2; // doctor looking at screen
+            }
+          });
+        }
+        
+        // Process doctor looking elsewhere ranges
+        if (manualAnnotations.rightPersonElsewhere) {
+          manualAnnotations.rightPersonElsewhere.forEach(range => {
+            for (let frame = range.startFrame; frame <= range.endFrame; frame++) {
+              doctorAnnotations[frame] = 3; // doctor looking elsewhere
+            }
+          });
+        }
+        
+        // Process patient looking at doctor ranges
+        if (manualAnnotations.leftPersonGaze) {
+          manualAnnotations.leftPersonGaze.forEach(range => {
+            for (let frame = range.startFrame; frame <= range.endFrame; frame++) {
+              patientAnnotations[frame] = 4; // patient looking at doctor
+            }
+          });
+        }
+        
+        // Process patient looking elsewhere ranges
+        if (manualAnnotations.leftPersonElsewhere) {
+          manualAnnotations.leftPersonElsewhere.forEach(range => {
+            for (let frame = range.startFrame; frame <= range.endFrame; frame++) {
+              patientAnnotations[frame] = 5; // patient looking elsewhere
+            }
+          });
+        }
+      }
+      
+      // Set the annotations state
+      setAnnotations({
+        doctor: doctorAnnotations,
+        patient: patientAnnotations
+      });
+      
+      alert("Your annotations loaded successfully for editing!");
+    } catch (error) {
+      console.error("Error loading annotations:", error);
+      alert("Error loading annotations. Please check the file format and try again.");
+    }
+    
+    // Reset the file input
+    event.target.value = null;
+  };
+
   const calculateDetailedAccuracyStats = (userAnnotations, modelData, type) => {
     if (
       !modelData ||
@@ -410,31 +629,45 @@ const VideoAnnotator = () => {
                        file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
             />
           </div>
+          
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
-              Upload Model Predictions
+              Upload AI Model Predictions
             </label>
-            <input
-              type="file"
-              accept=".json"
-              onChange={async (e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  const text = await file.text();
-                  try {
-                    const data = JSON.parse(text);
-                    setModelData(data);
-                  } catch (error) {
-                    console.error("Error parsing JSON:", error);
-                    alert("Error parsing changes.json file");
-                  }
-                }
-              }}
-              className="block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 
-                       file:rounded-md file:border-0 file:text-sm file:font-semibold 
-                       file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
-            />
+            <div className="flex items-center">
+              <input
+                type="file"
+                accept=".json"
+                onChange={loadModelPredictions}
+                className="block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 
+                         file:rounded-md file:border-0 file:text-sm file:font-semibold 
+                         file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+              />
+              <div className="ml-2 text-xs text-gray-500">
+                <Upload className="h-4 w-4 inline-block mr-1" /> For comparison only
+              </div>
+            </div>
           </div>
+          
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Load Your Annotations
+            </label>
+            <div className="flex items-center">
+              <input
+                type="file"
+                accept=".json"
+                onChange={loadUserAnnotations}
+                className="block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 
+                         file:rounded-md file:border-0 file:text-sm file:font-semibold 
+                         file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+              />
+              <div className="ml-2 text-xs text-gray-500">
+                <Upload className="h-4 w-4 inline-block mr-1" /> For editing
+              </div>
+            </div>
+          </div>
+          
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
               Frames skipped per annotation
@@ -451,6 +684,21 @@ const VideoAnnotator = () => {
               <option value="200">200 frames</option>
             </select>
           </div>
+          
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              &nbsp;
+            </label>
+            <button
+              onClick={saveAnnotations}
+              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors flex items-center"
+              disabled={!video || (Object.keys(annotations.doctor).length === 0 && Object.keys(annotations.patient).length === 0)}
+            >
+              <Save className="mr-2 h-4 w-4" />
+              Save Annotations
+            </button>
+          </div>
+          
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
               &nbsp;
