@@ -43,10 +43,9 @@ const TimelineVisualization = ({
       ctx.globalAlpha = 0.8;
       
       if (type === 'doctor') {
-        // FIXED: Process patient gaze ranges (doctor looking at patient)
-        // Using rightPersonGaze for doctor looking at patient
+        // Process patient gaze ranges (doctor looking at patient)
         if (rightPersonGaze) {
-          ctx.fillStyle = '#16a34a'; // Darker Green (green-600)
+          ctx.fillStyle = '#ef4444'; // Red (red-500) instead of green
           rightPersonGaze.forEach(range => {
             const startX = (range.startFrame / totalFrames) * width;
             const endX = (range.endFrame / totalFrames) * width;
@@ -109,7 +108,7 @@ const TimelineVisualization = ({
         // Set color based on value and type
         if (type === 'doctor') {
           switch(parseInt(value)) {
-            case 1: ctx.fillStyle = '#16a34a'; break; // Darker Green (green-600)
+            case 1: ctx.fillStyle = '#ef4444'; break; // Red (red-500) instead of green
             case 2: ctx.fillStyle = '#3b82f6'; break; // Blue
             case 3: ctx.fillStyle = '#9ca3af'; break; // Gray
             default: ctx.fillStyle = '#9ca3af';

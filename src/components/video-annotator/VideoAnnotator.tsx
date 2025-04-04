@@ -864,11 +864,12 @@ const VideoAnnotator = () => {
           <div className="w-full lg:w-1/4 bg-gray-50 rounded-lg p-4">
             <h3 className="font-bold text-lg mb-4">Color Legend</h3>
 
+            {/* Doctor Gaze Colors */}
             <div className="mb-6">
               <h4 className="font-medium mb-2">Doctor Gaze Colors</h4>
               <ul className="space-y-2">
                 <li className="flex items-center">
-                  <span className="inline-block w-6 h-6 rounded bg-green-600 mr-2"></span>
+                  <span className="inline-block w-6 h-6 rounded bg-red-500 mr-2"></span>
                   <span>Looking at Patient</span>
                 </li>
                 <li className="flex items-center">
@@ -937,25 +938,25 @@ const VideoAnnotator = () => {
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2.5">
-                        <div
-                          className="bg-green-600 h-2.5 rounded-full transition-all duration-300"
-                          style={{
-                            width: (() => {
-                              const stats = calculateDetailedAccuracyStats(
-                                annotations.doctor,
-                                modelData,
-                                "doctor"
-                              );
-                              if (!stats?.patientGaze.total) return "0%";
-                              return `${
-                                (stats.patientGaze.correct /
-                                  stats.patientGaze.total) *
-                                100
-                              }%`;
-                            })(),
-                          }}
-                        ></div>
-                      </div>
+                      <div
+                        className="bg-red-500 h-2.5 rounded-full transition-all duration-300"
+                        style={{
+                          width: (() => {
+                            const stats = calculateDetailedAccuracyStats(
+                              annotations.doctor,
+                              modelData,
+                              "doctor"
+                            );
+                            if (!stats?.patientGaze.total) return "0%";
+                            return `${
+                              (stats.patientGaze.correct /
+                                stats.patientGaze.total) *
+                              100
+                            }%`;
+                          })(),
+                        }}
+                      ></div>
+                    </div>
                     </div>
 
                     {/* Screen Gaze */}
