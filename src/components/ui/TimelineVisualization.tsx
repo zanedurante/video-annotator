@@ -4,7 +4,8 @@ const TimelineVisualization = ({
   manualAnnotations, 
   modelData, 
   totalFrames,
-  annotationPhase // Add this parameter to know which timeline is active
+  annotationPhase, // Add this parameter to know which timeline is active
+  currentFrame
 }) => {
   if (!totalFrames) return null;
 
@@ -151,8 +152,27 @@ const TimelineVisualization = ({
     return annotationPhase === type;
   };
 
+  // Create refs for the container divs to get their exact dimensions
+  const doctorContainerRef = useRef(null);
+  const patientContainerRef = useRef(null);
+
+  // Calculate the position of the current frame marker with better precision
+  const getFrameMarkerPosition = (containerRef) => {
+    if (!totalFrames || !containerRef.current) return 0;
+    
+    // Get the actual width of the container
+    const containerWidth = containerRef.current.getBoundingClientRect().width;
+    
+    // Calculate the exact pixel position
+    const position = (currentFrame / totalFrames) * containerWidth;
+    
+    // Account for the arrow's center point (half of arrow width)
+    return Math.max(0, position - 8); // 8px is half the width of the arrow
+  };
+
   return (
     <div className="space-y-4">
+      {/* Doctor Human Annotations */}
       <div>
         <div className="flex items-center mb-1">
           <div className="text-sm font-medium text-gray-700 flex-grow flex items-center">
@@ -163,16 +183,51 @@ const TimelineVisualization = ({
             )}
             Doctor Gaze Annotations
           </div>
-          
         </div>
-        <canvas 
-          ref={doctorCanvasRef}
-          width={1000}
-          height={16}
-          className={`w-full h-4 rounded ${isActiveTimeline('doctor') ? 'ring-2 ring-blue-500' : ''}`}
-        />
+        <div className="relative" ref={doctorContainerRef}>
+          <canvas 
+            ref={doctorCanvasRef}
+            width={1000}
+            height={16}
+            className={`w-full h-4 rounded ${isActiveTimeline('doctor') ? 'ring-2 ring-blue-500' : ''}`}
+          />
+          
+          {/* Current frame indicator for Doctor timeline */}
+          {isActiveTimeline('doctor') && (
+            <div 
+              className="absolute bottom-0 transform translate-y-full"
+              style={{ 
+                left: `${getFrameMarkerPosition(doctorContainerRef)}px`, 
+                marginTop: '2px',
+                pointerEvents: 'none' // Ensure it doesn't interfere with clicks
+              }}
+            >
+              <svg width="16" height="10" viewBox="0 0 16 10" className="text-red-500">
+                <polygon points="8,0 16,10 0,10" fill="currentColor"/>
+              </svg>
+            </div>
+          )}
+        </div>
       </div>
       
+      {/* Doctor AI Predictions */}
+      {modelData && (
+        <div>
+          <div className="flex items-center mb-1">
+            <div className="text-sm font-medium text-gray-700 flex-grow">
+              AI Doctor Gaze Predictions
+            </div>
+          </div>
+          <canvas 
+            ref={aiDoctorCanvasRef}
+            width={1000}
+            height={16}
+            className="w-full h-4 rounded"
+          />
+        </div>
+      )}
+      
+      {/* Patient Human Annotations */}
       <div>
         <div className="flex items-center mb-1">
           <div className="text-sm font-medium text-gray-700 flex-grow flex items-center">
@@ -184,44 +239,47 @@ const TimelineVisualization = ({
             Patient Gaze Annotations
           </div>
         </div>
-        <canvas 
-          ref={patientCanvasRef}
-          width={1000}
-          height={16}
-          className={`w-full h-4 rounded ${isActiveTimeline('patient') ? 'ring-2 ring-blue-500' : ''}`}
-        />
+        <div className="relative" ref={patientContainerRef}>
+          <canvas 
+            ref={patientCanvasRef}
+            width={1000}
+            height={16}
+            className={`w-full h-4 rounded ${isActiveTimeline('patient') ? 'ring-2 ring-blue-500' : ''}`}
+          />
+          
+          {/* Current frame indicator for Patient timeline */}
+          {isActiveTimeline('patient') && (
+            <div 
+              className="absolute bottom-0 transform translate-y-full"
+              style={{ 
+                left: `${getFrameMarkerPosition(patientContainerRef)}px`, 
+                marginTop: '2px',
+                pointerEvents: 'none' // Ensure it doesn't interfere with clicks
+              }}
+            >
+              <svg width="16" height="10" viewBox="0 0 16 10" className="text-red-500">
+                <polygon points="8,0 16,10 0,10" fill="currentColor"/>
+              </svg>
+            </div>
+          )}
+        </div>
       </div>
       
+      {/* Patient AI Predictions */}
       {modelData && (
-        <>
-          <div>
-            <div className="flex items-center mb-1">
-              <div className="text-sm font-medium text-gray-700 flex-grow">
-                AI Doctor Gaze Predictions
-              </div>
+        <div>
+          <div className="flex items-center mb-1">
+            <div className="text-sm font-medium text-gray-700 flex-grow">
+              AI Patient Gaze Predictions
             </div>
-            <canvas 
-              ref={aiDoctorCanvasRef}
-              width={1000}
-              height={16}
-              className="w-full h-4 rounded"
-            />
           </div>
-          
-          <div>
-            <div className="flex items-center mb-1">
-              <div className="text-sm font-medium text-gray-700 flex-grow">
-                AI Patient Gaze Predictions
-              </div>
-            </div>
-            <canvas 
-              ref={aiPatientCanvasRef}
-              width={1000}
-              height={16}
-              className="w-full h-4 rounded"
-            />
-          </div>
-        </>
+          <canvas 
+            ref={aiPatientCanvasRef}
+            width={1000}
+            height={16}
+            className="w-full h-4 rounded"
+          />
+        </div>
       )}
     </div>
   );

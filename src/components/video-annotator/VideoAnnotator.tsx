@@ -854,6 +854,7 @@ const VideoAnnotator = () => {
                   modelData={modelData}
                   totalFrames={totalFrames}
                   annotationPhase={annotationPhase}
+                  currentFrame={currentFrame} // Add this prop
                 />
               </div>
             )}
