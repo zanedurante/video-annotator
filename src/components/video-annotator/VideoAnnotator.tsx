@@ -766,12 +766,6 @@ const VideoAnnotator = () => {
                   </span>
                   <span>Next Frame</span>
                 </li>
-                <li className="flex items-center">
-                  <span className="inline-block w-24 px-2 py-1 bg-gray-200 rounded mr-2 text-center">
-                    Hold S
-                  </span>
-                  <span>Continuous annotation</span>
-                </li>
               </ul>
             </div>
 
