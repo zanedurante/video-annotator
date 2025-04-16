@@ -1,4 +1,9 @@
+"use client"
+
 import React, { useEffect, useRef } from 'react';
+if (process.env.NODE_ENV === "development") {
+  console.error = () => {};
+}
 
 const TimelineVisualization = ({ 
   manualAnnotations, 
