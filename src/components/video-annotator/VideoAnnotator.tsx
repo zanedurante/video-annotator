@@ -678,6 +678,7 @@ const VideoAnnotator = () => {
               className="block rounded-md border-gray-300 shadow-sm px-4 py-2"
             >
               <option value="1">1 frame</option>
+              <option value="5">5 frame</option>
               <option value="10">10 frames</option>
               <option value="20">20 frames</option>
               <option value="50">50 frames</option>
