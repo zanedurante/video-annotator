@@ -156,7 +156,7 @@ const VideoAnnotator = () => {
       // Patient phase controls
       else if (
         annotationPhase === "patient" &&
-        ["Digit4", "Digit5"].includes(event.code)
+        ["Digit4", "Digit5", "Digit6"].includes(event.code)
       ) {
         const value = parseInt(event.code.replace("Digit", ""));
         addAnnotation(value);
@@ -217,6 +217,7 @@ const VideoAnnotator = () => {
     
     // Process patient gaze annotations
     const patientDoctorGazeRanges = [];
+    const patientScreenGazeRanges = []; // New array for patient looking at screen
     const patientElsewhereGazeRanges = [];
     
     // Temporary arrays to store continuous ranges of frames
@@ -224,6 +225,7 @@ const VideoAnnotator = () => {
     let currentScreenRange = null;
     let currentDoctorElsewhereRange = null;
     let currentPatientDoctorRange = null;
+    let currentPatientScreenRange = null; // New temporary variable for patient screen
     let currentPatientElsewhereRange = null;
     
     // Sort frames numerically
@@ -338,9 +340,36 @@ const VideoAnnotator = () => {
           patientElsewhereGazeRanges.push(currentPatientElsewhereRange);
           currentPatientElsewhereRange = null;
         }
-      } 
-      // Process patient looking elsewhere (value 5)
+        if (currentPatientScreenRange) {
+          patientScreenGazeRanges.push(currentPatientScreenRange);
+          currentPatientScreenRange = null;
+        }
+      }
+      // Process patient looking at screen (value 5) - UPDATED
       else if (value === 5) {
+        if (!currentPatientScreenRange) {
+          currentPatientScreenRange = { startFrame: frame, endFrame: frame };
+        } else if (frame === currentPatientScreenRange.endFrame + 1) {
+          // Extend the range if frames are consecutive
+          currentPatientScreenRange.endFrame = frame;
+        } else {
+          // Save the current range and start a new one
+          patientScreenGazeRanges.push(currentPatientScreenRange);
+          currentPatientScreenRange = { startFrame: frame, endFrame: frame };
+        }
+        
+        // End other ranges if active
+        if (currentPatientDoctorRange) {
+          patientDoctorGazeRanges.push(currentPatientDoctorRange);
+          currentPatientDoctorRange = null;
+        }
+        if (currentPatientElsewhereRange) {
+          patientElsewhereGazeRanges.push(currentPatientElsewhereRange);
+          currentPatientElsewhereRange = null;
+        }
+      }
+      // Process patient looking elsewhere (value 6) - UPDATED
+      else if (value === 6) {
         if (!currentPatientElsewhereRange) {
           currentPatientElsewhereRange = { startFrame: frame, endFrame: frame };
         } else if (frame === currentPatientElsewhereRange.endFrame + 1) {
@@ -357,11 +386,16 @@ const VideoAnnotator = () => {
           patientDoctorGazeRanges.push(currentPatientDoctorRange);
           currentPatientDoctorRange = null;
         }
+        if (currentPatientScreenRange) {
+          patientScreenGazeRanges.push(currentPatientScreenRange);
+          currentPatientScreenRange = null;
+        }
       }
     });
     
     // Add any remaining patient ranges
     if (currentPatientDoctorRange) patientDoctorGazeRanges.push(currentPatientDoctorRange);
+    if (currentPatientScreenRange) patientScreenGazeRanges.push(currentPatientScreenRange);
     if (currentPatientElsewhereRange) patientElsewhereGazeRanges.push(currentPatientElsewhereRange);
     
     // Format the final output to match the model data structure
@@ -376,6 +410,7 @@ const VideoAnnotator = () => {
           rightPersonScreen: doctorScreenGazeRanges,
           rightPersonElsewhere: doctorElsewhereGazeRanges,
           leftPersonGaze: patientDoctorGazeRanges,
+          leftPersonScreen: patientScreenGazeRanges, // New field for patient screen gaze
           leftPersonElsewhere: patientElsewhereGazeRanges
         }
       }
@@ -490,11 +525,20 @@ const VideoAnnotator = () => {
           });
         }
         
-        // Process patient looking elsewhere ranges
+        // Process patient looking at screen ranges - UPDATED key value
+        if (manualAnnotations.leftPersonScreen) {
+          manualAnnotations.leftPersonScreen.forEach(range => {
+            for (let frame = range.startFrame; frame <= range.endFrame; frame++) {
+              patientAnnotations[frame] = 5; // patient looking at screen (changed from 6 to 5)
+            }
+          });
+        }
+        
+        // Process patient looking elsewhere ranges - UPDATED key value
         if (manualAnnotations.leftPersonElsewhere) {
           manualAnnotations.leftPersonElsewhere.forEach(range => {
             for (let frame = range.startFrame; frame <= range.endFrame; frame++) {
-              patientAnnotations[frame] = 5; // patient looking elsewhere
+              patientAnnotations[frame] = 6; // patient looking elsewhere (changed from 5 to 6)
             }
           });
         }
@@ -580,26 +624,41 @@ const VideoAnnotator = () => {
       // Evaluating patient gaze annotations
       metrics = {
         doctorGaze: { correct: 0, total: 0 },
+        screenGaze: { correct: 0, total: 0 }, // New metric for patient screen gaze
       };
   
       Object.entries(userAnnotations).forEach(([frame, value]) => {
         const frameNum = parseInt(frame);
   
-        // FIXED: Check if patient is looking at doctor in model data
-        // Using leftPersonGaze for patient looking at doctor
+        // Check if patient is looking at doctor in model data
         const modelDoctorGaze = getModelGazeStatus(
           frameNum,
           modelData[1]?.manualAnnotations?.leftPersonGaze || []
         );
+        
+        // Check if patient is looking at screen in model data
+        const modelScreenGaze = getModelGazeStatus(
+          frameNum,
+          modelData[1]?.manualAnnotations?.leftPersonScreen || []
+        );
   
         // User's annotations
         const userDoctorGaze = value === 4; // User says patient is looking at doctor
+        const userScreenGaze = value === 5; // User says patient is looking at screen (changed from 6 to 5)
   
         // Calculate accuracy for doctor gaze
         if (userDoctorGaze || modelDoctorGaze) {
           metrics.doctorGaze.total++;
           if (userDoctorGaze === modelDoctorGaze) {
             metrics.doctorGaze.correct++;
+          }
+        }
+        
+        // Calculate accuracy for screen gaze - NEW
+        if (userScreenGaze || modelScreenGaze) {
+          metrics.screenGaze.total++;
+          if (userScreenGaze === modelScreenGaze) {
+            metrics.screenGaze.correct++;
           }
         }
       });
@@ -811,6 +870,12 @@ const VideoAnnotator = () => {
                   <span className="inline-block w-24 px-2 py-1 bg-gray-200 rounded mr-2 text-center">
                     5
                   </span>
+                  <span>Looking at Screen</span>
+                </li>
+                <li className="flex items-center">
+                  <span className="inline-block w-24 px-2 py-1 bg-gray-200 rounded mr-2 text-center">
+                    6
+                  </span>
                   <span>Looking Elsewhere</span>
                 </li>
               </ul>
@@ -882,8 +947,12 @@ const VideoAnnotator = () => {
               <h4 className="font-medium mb-2">Patient Gaze Colors</h4>
               <ul className="space-y-2">
                 <li className="flex items-center">
-                  <span className="inline-block w-6 h-6 rounded bg-purple-500 mr-2"></span>
+                  <span className="inline-block w-6 h-6 rounded bg-red-500 mr-2"></span>
                   <span>Looking at Doctor</span>
+                </li>
+                <li className="flex items-center">
+                  <span className="inline-block w-6 h-6 rounded bg-blue-500 mr-2"></span>
+                  <span>Looking at Screen</span>
                 </li>
                 <li className="flex items-center">
                   <span className="inline-block w-6 h-6 rounded bg-gray-400 mr-2"></span>
@@ -1005,46 +1074,93 @@ const VideoAnnotator = () => {
                   <h4 className="text-lg font-medium mb-4 text-gray-800">
                     Patient Gaze Accuracy
                   </h4>
-                  <div>
-                    <div className="flex justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">
-                        Looking at Doctor
-                      </span>
-                      <span className="text-sm font-medium text-gray-700">
-                        {(() => {
-                          const stats = calculateDetailedAccuracyStats(
-                            annotations.patient,
-                            modelData,
-                            "patient"
-                          );
-                          if (!stats?.doctorGaze.total) return "0%";
-                          return `${(
-                            (stats.doctorGaze.correct /
-                              stats.doctorGaze.total) *
-                            100
-                          ).toFixed(1)}%`;
-                        })()}
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2.5">
-                      <div
-                        className="bg-purple-600 h-2.5 rounded-full transition-all duration-300"
-                        style={{
-                          width: (() => {
+                  <div className="space-y-4">
+                    {/* Looking at Doctor */}
+                    <div>
+                      <div className="flex justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-700">
+                          Looking at Doctor
+                        </span>
+                        <span className="text-sm font-medium text-gray-700">
+                          {(() => {
                             const stats = calculateDetailedAccuracyStats(
                               annotations.patient,
                               modelData,
                               "patient"
                             );
                             if (!stats?.doctorGaze.total) return "0%";
-                            return `${
+                            return `${(
                               (stats.doctorGaze.correct /
                                 stats.doctorGaze.total) *
                               100
-                            }%`;
-                          })(),
-                        }}
-                      ></div>
+                            ).toFixed(1)}%`;
+                          })()}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div
+                          className="bg-purple-600 h-2.5 rounded-full transition-all duration-300"
+                          style={{
+                            width: (() => {
+                              const stats = calculateDetailedAccuracyStats(
+                                annotations.patient,
+                                modelData,
+                                "patient"
+                              );
+                              if (!stats?.doctorGaze.total) return "0%";
+                              return `${
+                                (stats.doctorGaze.correct /
+                                  stats.doctorGaze.total) *
+                                100
+                              }%`;
+                            })(),
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                    
+                    {/* Looking at Screen - NEW */}
+                    <div>
+                      <div className="flex justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-700">
+                          Looking at Screen
+                        </span>
+                        <span className="text-sm font-medium text-gray-700">
+                          {(() => {
+                            const stats = calculateDetailedAccuracyStats(
+                              annotations.patient,
+                              modelData,
+                              "patient"
+                            );
+                            if (!stats?.screenGaze.total) return "0%";
+                            return `${(
+                              (stats.screenGaze.correct /
+                                stats.screenGaze.total) *
+                              100
+                            ).toFixed(1)}%`;
+                          })()}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div
+                          className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+                          style={{
+                            width: (() => {
+                              const stats = calculateDetailedAccuracyStats(
+                                annotations.patient,
+                                modelData,
+                                "patient"
+                              );
+                              if (!stats?.screenGaze.total) return "0%";
+                              return `${
+                                (stats.screenGaze.correct /
+                                  stats.screenGaze.total) *
+                                100
+                              }%`;
+                            })(),
+                          }}
+                        ></div>
+                      </div>
                     </div>
                   </div>
                 </div>

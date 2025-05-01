@@ -41,7 +41,7 @@ const TimelineVisualization = ({
     
     if (isAI) {
       // For AI predictions, draw continuous ranges
-      const { leftPersonGaze, rightPersonGaze, rightPersonScreen } = 
+      const { leftPersonGaze, leftPersonScreen, rightPersonGaze, rightPersonScreen } = 
         modelData?.[1]?.manualAnnotations || {};
       
       // Set transparency for AI predictions
@@ -50,7 +50,7 @@ const TimelineVisualization = ({
       if (type === 'doctor') {
         // Process patient gaze ranges (doctor looking at patient)
         if (rightPersonGaze) {
-          ctx.fillStyle = '#ef4444'; // Red (red-500) instead of green
+          ctx.fillStyle = '#ef4444'; // Red (red-500)
           rightPersonGaze.forEach(range => {
             const startX = (range.startFrame / totalFrames) * width;
             const endX = (range.endFrame / totalFrames) * width;
@@ -70,11 +70,21 @@ const TimelineVisualization = ({
           });
         }
       } else {
-        // FIXED: Process doctor gaze ranges (patient looking at doctor)
-        // Using leftPersonGaze for patient looking at doctor
+        // Process doctor gaze ranges (patient looking at doctor)
         if (leftPersonGaze) {
-          ctx.fillStyle = '#a855f7'; // Purple
+          ctx.fillStyle = '#ef4444'; // Red (red-500) - Same as doctor looking at patient
           leftPersonGaze.forEach(range => {
+            const startX = (range.startFrame / totalFrames) * width;
+            const endX = (range.endFrame / totalFrames) * width;
+            const barWidth = Math.max(1, endX - startX); // Ensure at least 1px width
+            ctx.fillRect(startX, 0, barWidth, height);
+          });
+        }
+        
+        // Process screen gaze ranges (patient looking at screen) - NEW
+        if (leftPersonScreen) {
+          ctx.fillStyle = '#3b82f6'; // Blue - Same as doctor looking at screen
+          leftPersonScreen.forEach(range => {
             const startX = (range.startFrame / totalFrames) * width;
             const endX = (range.endFrame / totalFrames) * width;
             const barWidth = Math.max(1, endX - startX); // Ensure at least 1px width
@@ -99,6 +109,7 @@ const TimelineVisualization = ({
         // Initialize value groups for patient
         annotationsByValue[4] = []; // Looking at doctor
         annotationsByValue[5] = []; // Looking elsewhere
+        annotationsByValue[6] = []; // Looking at screen - NEW
       }
       
       // Group frames by annotation value
@@ -113,15 +124,16 @@ const TimelineVisualization = ({
         // Set color based on value and type
         if (type === 'doctor') {
           switch(parseInt(value)) {
-            case 1: ctx.fillStyle = '#ef4444'; break; // Red (red-500) instead of green
+            case 1: ctx.fillStyle = '#ef4444'; break; // Red (red-500)
             case 2: ctx.fillStyle = '#3b82f6'; break; // Blue
             case 3: ctx.fillStyle = '#9ca3af'; break; // Gray
             default: ctx.fillStyle = '#9ca3af';
           }
         } else {
           switch(parseInt(value)) {
-            case 4: ctx.fillStyle = '#a855f7'; break; // Purple
-            case 5: ctx.fillStyle = '#9ca3af'; break; // Gray
+            case 4: ctx.fillStyle = '#ef4444'; break; // Red (red-500) - Same as doctor looking at patient
+            case 5: ctx.fillStyle = '#3b82f6'; break; // Blue - Same as doctor looking at screen
+            case 6: ctx.fillStyle = '#9ca3af'; break; // Gray
             default: ctx.fillStyle = '#9ca3af';
           }
         }
