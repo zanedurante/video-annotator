@@ -50,7 +50,7 @@ const TimelineVisualization = ({
       if (type === 'doctor') {
         // Process patient gaze ranges (doctor looking at patient)
         if (rightPersonGaze) {
-          ctx.fillStyle = '#ef4444'; // Red (red-500)
+          ctx.fillStyle = '#3b82f6'; // Blue
           rightPersonGaze.forEach(range => {
             const startX = (range.startFrame / totalFrames) * width;
             const endX = (range.endFrame / totalFrames) * width;
@@ -61,7 +61,7 @@ const TimelineVisualization = ({
         
         // Process screen gaze ranges (doctor looking at screen)
         if (rightPersonScreen) {
-          ctx.fillStyle = '#3b82f6'; // Blue
+          ctx.fillStyle = '#ef4444'; // Red (red-500)
           rightPersonScreen.forEach(range => {
             const startX = (range.startFrame / totalFrames) * width;
             const endX = (range.endFrame / totalFrames) * width;
@@ -72,7 +72,7 @@ const TimelineVisualization = ({
       } else {
         // Process doctor gaze ranges (patient looking at doctor)
         if (leftPersonGaze) {
-          ctx.fillStyle = '#ef4444'; // Red (red-500) - Same as doctor looking at patient
+          ctx.fillStyle = '#3b82f6'; // Blue - Same as doctor looking at screen
           leftPersonGaze.forEach(range => {
             const startX = (range.startFrame / totalFrames) * width;
             const endX = (range.endFrame / totalFrames) * width;
@@ -83,7 +83,7 @@ const TimelineVisualization = ({
         
         // Process screen gaze ranges (patient looking at screen) - NEW
         if (leftPersonScreen) {
-          ctx.fillStyle = '#3b82f6'; // Blue - Same as doctor looking at screen
+          ctx.fillStyle = '#ef4444'; // Red (red-500) - Same as doctor looking at patient
           leftPersonScreen.forEach(range => {
             const startX = (range.startFrame / totalFrames) * width;
             const endX = (range.endFrame / totalFrames) * width;
@@ -124,15 +124,15 @@ const TimelineVisualization = ({
         // Set color based on value and type
         if (type === 'doctor') {
           switch(parseInt(value)) {
-            case 1: ctx.fillStyle = '#ef4444'; break; // Red (red-500)
-            case 2: ctx.fillStyle = '#3b82f6'; break; // Blue
+            case 1: ctx.fillStyle = '#3b82f6'; break; // Blue
+            case 2: ctx.fillStyle = '#ef4444'; break; // Red (red-500)
             case 3: ctx.fillStyle = '#9ca3af'; break; // Gray
             default: ctx.fillStyle = '#9ca3af';
           }
         } else {
           switch(parseInt(value)) {
-            case 4: ctx.fillStyle = '#ef4444'; break; // Red (red-500) - Same as doctor looking at patient
-            case 5: ctx.fillStyle = '#3b82f6'; break; // Blue - Same as doctor looking at screen
+            case 4: ctx.fillStyle = '#3b82f6'; break; // Blue - Same as doctor looking at screen
+            case 5: ctx.fillStyle = '#ef4444'; break; // Red (red-500) - Same as doctor looking at patient
             case 6: ctx.fillStyle = '#9ca3af'; break; // Gray
             default: ctx.fillStyle = '#9ca3af';
           }
