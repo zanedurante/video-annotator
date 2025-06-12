@@ -929,7 +929,7 @@ const VideoAnnotator = () => {
               <h4 className="font-medium mb-2">Doctor Gaze Colors</h4>
               <ul className="space-y-2">
                 <li className="flex items-center">
-                  <span className="inline-block w-6 h-6 rounded bg-blue-500 mr-2"></span>
+                  <span className="inline-block w-6 h-6 rounded bg-green-500 mr-2"></span>
                   <span>Looking at Patient</span>
                 </li>
                 <li className="flex items-center">
@@ -947,7 +947,7 @@ const VideoAnnotator = () => {
               <h4 className="font-medium mb-2">Patient Gaze Colors</h4>
               <ul className="space-y-2">
                 <li className="flex items-center">
-                  <span className="inline-block w-6 h-6 rounded bg-blue-500 mr-2"></span>
+                  <span className="inline-block w-6 h-6 rounded bg-green-500 mr-2"></span>
                   <span>Looking at Doctor</span>
                 </li>
                 <li className="flex items-center">

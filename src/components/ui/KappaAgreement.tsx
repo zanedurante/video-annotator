@@ -524,7 +524,7 @@ const KappaAgreement = () => {
         const ranges = data[category] || [];
         
         switch(categoryIndex) {
-          case 0: doctorCtx.fillStyle = '#3b82f6'; break; // Blue for looking at patient
+          case 0: doctorCtx.fillStyle = '#1bd018'; break; // Blue for looking at patient
           case 1: doctorCtx.fillStyle = '#ef4444'; break; // Red for looking at screen
           case 2: doctorCtx.fillStyle = '#9ca3af'; break; // Gray for looking elsewhere
         }
@@ -543,7 +543,7 @@ const KappaAgreement = () => {
         const ranges = data[category] || [];
         
         switch(categoryIndex) {
-          case 0: patientCtx.fillStyle = '#3b82f6'; break; // Blue for looking at doctor
+          case 0: patientCtx.fillStyle = '#1bd018'; break; // Green for looking at doctor
           case 1: patientCtx.fillStyle = '#ef4444'; break; // Red for looking at screen
           case 2: patientCtx.fillStyle = '#9ca3af'; break; // Gray for looking elsewhere
         }
@@ -686,7 +686,7 @@ const KappaAgreement = () => {
                 <div className="text-center font-medium text-sm text-gray-700 mb-1">Doctor Gaze</div>
                 <div className="flex space-x-2 mb-1 text-xs">
                   <div className="flex items-center">
-                    <span className="inline-block w-3 h-3 rounded bg-blue-500 mr-1"></span>
+                    <span className="inline-block w-3 h-3 rounded bg-green-500 mr-1"></span>
                     <span>Patient</span>
                   </div>
                   <div className="flex items-center">
@@ -703,7 +703,7 @@ const KappaAgreement = () => {
                 <div className="text-center font-medium text-sm text-gray-700 mb-1">Patient Gaze</div>
                 <div className="flex space-x-2 mb-1 text-xs">
                   <div className="flex items-center">
-                    <span className="inline-block w-3 h-3 rounded bg-blue-500 mr-1"></span>
+                    <span className="inline-block w-3 h-3 rounded bg-green-500 mr-1"></span>
                     <span>Doctor</span>
                   </div>
                   <div className="flex items-center">

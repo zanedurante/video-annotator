@@ -50,7 +50,7 @@ const TimelineVisualization = ({
       if (type === 'doctor') {
         // Process patient gaze ranges (doctor looking at patient)
         if (rightPersonGaze) {
-          ctx.fillStyle = '#3b82f6'; // Blue
+          ctx.fillStyle = '#1bd018'; // Green
           rightPersonGaze.forEach(range => {
             const startX = (range.startFrame / totalFrames) * width;
             const endX = (range.endFrame / totalFrames) * width;
@@ -72,7 +72,7 @@ const TimelineVisualization = ({
       } else {
         // Process doctor gaze ranges (patient looking at doctor)
         if (leftPersonGaze) {
-          ctx.fillStyle = '#3b82f6'; // Blue - Same as doctor looking at screen
+          ctx.fillStyle = '#ef4444'; // Blue - Same as doctor looking at screen
           leftPersonGaze.forEach(range => {
             const startX = (range.startFrame / totalFrames) * width;
             const endX = (range.endFrame / totalFrames) * width;
@@ -124,15 +124,15 @@ const TimelineVisualization = ({
         // Set color based on value and type
         if (type === 'doctor') {
           switch(parseInt(value)) {
-            case 1: ctx.fillStyle = '#3b82f6'; break; // Blue
+            case 1: ctx.fillStyle = '#1bd018'; break; // Green
             case 2: ctx.fillStyle = '#ef4444'; break; // Red (red-500)
             case 3: ctx.fillStyle = '#9ca3af'; break; // Gray
             default: ctx.fillStyle = '#9ca3af';
           }
         } else {
           switch(parseInt(value)) {
-            case 4: ctx.fillStyle = '#3b82f6'; break; // Blue - Same as doctor looking at screen
-            case 5: ctx.fillStyle = '#ef4444'; break; // Red (red-500) - Same as doctor looking at patient
+            case 4: ctx.fillStyle = '#1bd018'; break; // Green - Same as doctor looking at patient
+            case 5: ctx.fillStyle = '#ef4444'; break; // Red (red-500) - Same as doctor looking at screen
             case 6: ctx.fillStyle = '#9ca3af'; break; // Gray
             default: ctx.fillStyle = '#9ca3af';
           }
