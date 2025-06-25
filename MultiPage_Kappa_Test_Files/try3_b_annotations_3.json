@@ -1,0 +1,99 @@
+[
+  {
+    "videoFile": "try3_3.mov",
+    "annotatorName": "b",
+    "videoTitle": "try3_3.mov"
+  },
+  {
+    "manualAnnotations": {
+      "rightPersonGaze": [
+        {
+          "startFrame": 0,
+          "endFrame": 0
+        },
+        {
+          "startFrame": 10,
+          "endFrame": 10
+        },
+        {
+          "startFrame": 20,
+          "endFrame": 20
+        }
+      ],
+      "rightPersonScreen": [
+        {
+          "startFrame": 30,
+          "endFrame": 30
+        },
+        {
+          "startFrame": 40,
+          "endFrame": 40
+        },
+        {
+          "startFrame": 50,
+          "endFrame": 50
+        },
+        {
+          "startFrame": 80,
+          "endFrame": 80
+        }
+      ],
+      "rightPersonElsewhere": [
+        {
+          "startFrame": 60,
+          "endFrame": 60
+        },
+        {
+          "startFrame": 70,
+          "endFrame": 70
+        }
+      ],
+      "leftPersonGaze": [
+        {
+          "startFrame": 0,
+          "endFrame": 0
+        },
+        {
+          "startFrame": 10,
+          "endFrame": 10
+        },
+        {
+          "startFrame": 20,
+          "endFrame": 20
+        }
+      ],
+      "leftPersonScreen": [
+        {
+          "startFrame": 30,
+          "endFrame": 30
+        },
+        {
+          "startFrame": 40,
+          "endFrame": 40
+        },
+        {
+          "startFrame": 50,
+          "endFrame": 50
+        },
+        {
+          "startFrame": 80,
+          "endFrame": 80
+        }
+      ],
+      "leftPersonElsewhere": [
+        {
+          "startFrame": 60,
+          "endFrame": 60
+        },
+        {
+          "startFrame": 70,
+          "endFrame": 70
+        }
+      ]
+    },
+    "videoInfo": {
+      "totalFrames": 1243,
+      "frameInterval": 10
+    }
+  }
+]

@@ -1,192 +1,252 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Upload, BarChart3, Trash2, RefreshCw, AlertTriangle } from "lucide-react";
+import { Upload, ChevronLeft, ChevronRight, Users, Video, BarChart3, Eye, EyeOff } from "lucide-react";
 
-const KappaAgreement = () => {
-  const [annotationFiles, setAnnotationFiles] = useState([]);
-  const [videoInfo, setVideoInfo] = useState(null);
-  const [kappaResults, setKappaResults] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [frameIntervalError, setFrameIntervalError] = useState(null);
-  
-  // References to canvas elements
-  const doctorCanvasRefs = useRef({});
-  const patientCanvasRefs = useRef({});
-  
-  // Helper function to detect frame interval from annotations
-  const detectFrameInterval = (annotations) => {
-    if (!annotations || typeof annotations !== 'object' || Object.keys(annotations).length === 0) {
-      return null;
-    }
+const KappaAgreementAnalysis = () => {
+  const [files, setFiles] = useState([]);
+  const [videoData, setVideoData] = useState({});
+  const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
+  const [results, setResults] = useState(null);
+  const [showTimelines, setShowTimelines] = useState(false);
+
+  // Handle file uploads
+  const handleFileUpload = (event) => {
+    const uploadedFiles = Array.from(event.target.files);
     
-    // Get all annotated frames and sort them
-    const frames = Object.keys(annotations).map(f => parseInt(f)).sort((a, b) => a - b);
-    
-    if (frames.length < 2) {
-      return null; // Cannot determine interval with less than 2 frames
-    }
-    
-    // Calculate intervals between consecutive frames
-    const intervals = [];
-    for (let i = 1; i < frames.length; i++) {
-      intervals.push(frames[i] - frames[i-1]);
-    }
-    
-    // Find the most common interval (mode)
-    const intervalCounts = {};
-    intervals.forEach(interval => {
-      intervalCounts[interval] = (intervalCounts[interval] || 0) + 1;
+    Promise.all(
+      uploadedFiles.map(file => 
+        file.text().then(text => ({
+          name: file.name,
+          data: JSON.parse(text)
+        }))
+      )
+    ).then(parsedFiles => {
+      setFiles(parsedFiles);
+      organizeByVideo(parsedFiles);
+    }).catch(error => {
+      console.error("Error parsing files:", error);
+      alert("Error parsing one or more files. Please check the file format.");
     });
-    
-    // Get the most frequent interval
-    const mostCommonInterval = Object.keys(intervalCounts).reduce((a, b) => 
-      intervalCounts[a] > intervalCounts[b] ? a : b
-    );
-    
-    return parseInt(mostCommonInterval);
   };
-  
-  // Helper function to validate frame intervals across files
-  const validateFrameIntervals = (files) => {
-    const frameIntervals = [];
+
+  // Organize files by video name and annotator
+  const organizeByVideo = (files) => {
+    const organized = {};
     
     files.forEach(file => {
-      const data = file.data[1]?.manualAnnotations;
-      if (!data) return;
+      const videoFile = file.data[0]?.videoFile || file.data[0]?.videoTitle || "Unknown Video";
+      const annotatorName = file.data[0]?.annotatorName || "Unknown Annotator";
       
-      // Check intervals for all annotation types
-      const allAnnotations = {};
+      // Clean video name (remove file extension)
+      const cleanVideoName = videoFile.replace(/\.(mp4|avi|mov|mkv|webm)$/i, '');
       
-      // Combine all doctor annotations
-      ['rightPersonGaze', 'rightPersonScreen', 'rightPersonElsewhere'].forEach(type => {
-        if (data[type]) {
-          data[type].forEach(range => {
-            for (let frame = range.startFrame; frame <= range.endFrame; frame++) {
-              allAnnotations[frame] = true;
-            }
+      if (!organized[cleanVideoName]) {
+        organized[cleanVideoName] = {};
+      }
+      
+      if (!organized[cleanVideoName][annotatorName]) {
+        organized[cleanVideoName][annotatorName] = [];
+      }
+      
+      organized[cleanVideoName][annotatorName].push(file);
+    });
+    
+    setVideoData(organized);
+    setCurrentVideoIndex(0);
+    setResults(null);
+  };
+
+  // Get list of video names
+  const getVideoNames = () => {
+    return Object.keys(videoData);
+  };
+
+  // Get current video name
+  const getCurrentVideoName = () => {
+    const videoNames = getVideoNames();
+    return videoNames[currentVideoIndex] || "No Video";
+  };
+
+  // Get annotators for current video
+  const getCurrentAnnotators = () => {
+    const currentVideo = getCurrentVideoName();
+    return Object.keys(videoData[currentVideo] || {});
+  };
+
+  // Get all files for current video (flattened)
+  const getCurrentVideoFiles = () => {
+    const currentVideo = getCurrentVideoName();
+    const videoAnnotators = videoData[currentVideo] || {};
+    
+    const allFiles = [];
+    Object.values(videoAnnotators).forEach(annotatorFiles => {
+      allFiles.push(...annotatorFiles);
+    });
+    
+    return allFiles;
+  };
+
+  // Get total frames for current video
+  const getTotalFrames = () => {
+    const currentFiles = getCurrentVideoFiles();
+    if (currentFiles.length === 0) return 1000; // Default
+    
+    // Try to get total frames from video info, or estimate from annotations
+    const firstFile = currentFiles[0];
+    const videoInfo = firstFile.data[1]?.videoInfo;
+    
+    if (videoInfo?.totalFrames) {
+      return videoInfo.totalFrames;
+    }
+    
+    // Estimate from annotations
+    const annotations = firstFile.data[1]?.manualAnnotations;
+    if (annotations) {
+      let maxFrame = 0;
+      ['rightPersonGaze', 'rightPersonScreen', 'rightPersonElsewhere', 
+       'leftPersonGaze', 'leftPersonScreen', 'leftPersonElsewhere'].forEach(type => {
+        if (annotations[type]) {
+          annotations[type].forEach(range => {
+            maxFrame = Math.max(maxFrame, range.endFrame);
           });
         }
       });
-      
-      // Combine all patient annotations
-      ['leftPersonGaze', 'leftPersonScreen', 'leftPersonElsewhere'].forEach(type => {
-        if (data[type]) {
-          data[type].forEach(range => {
-            for (let frame = range.startFrame; frame <= range.endFrame; frame++) {
-              allAnnotations[frame] = true;
-            }
-          });
-        }
-      });
-      
-      const interval = detectFrameInterval(allAnnotations);
-      if (interval !== null) {
-        frameIntervals.push({
-          fileName: file.name,
-          interval: interval
-        });
-      }
-    });
-    
-    // Check if all intervals are the same
-    if (frameIntervals.length === 0) {
-      return { valid: false, error: "No frame intervals could be detected from the uploaded files." };
+      return maxFrame > 0 ? maxFrame : 1000;
     }
     
-    const firstInterval = frameIntervals[0].interval;
-    const mismatchedFiles = frameIntervals.filter(file => file.interval !== firstInterval);
-    
-    if (mismatchedFiles.length > 0) {
-      return {
-        valid: false,
-        error: `Frame interval mismatch detected! Expected interval: ${firstInterval} frames, but found different intervals in: ${mismatchedFiles.map(f => `${f.fileName} (${f.interval} frames)`).join(', ')}`
-      };
-    }
-    
-    return {
-      valid: true,
-      interval: firstInterval
-    };
+    return 1000; // Default fallback
   };
-  
-  // Add annotation file to state
-  const handleFileUpload = async (event) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
+
+  // Draw timeline visualization
+  const drawTimeline = (canvas, annotationData, type, annotatorName) => {
+    if (!canvas || !annotationData) return;
     
-    setLoading(true);
-    setFrameIntervalError(null);
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    const totalFrames = getTotalFrames();
     
-    try {
-      // Process each file
-      const newAnnotationFiles = [];
-      
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        const text = await file.text();
-        const data = JSON.parse(text);
-        
-        // Extract video info if not already set
-        if (!videoInfo && data.length >= 2 && data[1]?.videoInfo) {
-          setVideoInfo(data[1].videoInfo);
-        }
-        
-        newAnnotationFiles.push({
-          id: Date.now() + i, // Unique ID
-          name: file.name,
-          data: data
+    // Clear canvas
+    ctx.clearRect(0, 0, width, height);
+    
+    // Set background
+    ctx.fillStyle = '#f3f4f6'; // Light gray
+    ctx.fillRect(0, 0, width, height);
+    
+    const annotations = annotationData[1]?.manualAnnotations;
+    if (!annotations) return;
+    
+    if (type === 'doctor') {
+      // Draw doctor annotations
+      if (annotations.rightPersonGaze) {
+        ctx.fillStyle = '#10b981'; // Green
+        annotations.rightPersonGaze.forEach(range => {
+          const startX = (range.startFrame / totalFrames) * width;
+          const endX = (range.endFrame / totalFrames) * width;
+          const barWidth = Math.max(1, endX - startX);
+          ctx.fillRect(startX, 0, barWidth, height);
         });
       }
       
-      // Validate frame intervals for all files (existing + new)
-      const allFiles = [...annotationFiles, ...newAnnotationFiles];
-      
-      // Allow unlimited files for pairwise comparison
-      
-      const validation = validateFrameIntervals(allFiles);
-      
-      if (!validation.valid) {
-        setFrameIntervalError(validation.error);
-        alert(`Error: ${validation.error}\n\nPlease ensure all annotation files use the same frame interval setting.`);
-        return;
+      if (annotations.rightPersonScreen) {
+        ctx.fillStyle = '#ef4444'; // Red
+        annotations.rightPersonScreen.forEach(range => {
+          const startX = (range.startFrame / totalFrames) * width;
+          const endX = (range.endFrame / totalFrames) * width;
+          const barWidth = Math.max(1, endX - startX);
+          ctx.fillRect(startX, 0, barWidth, height);
+        });
       }
       
-      // If validation passes, add the files
-      setAnnotationFiles(allFiles);
-      
-      // Calculate kappa if we have at least 2 files
-      if (allFiles.length >= 2) {
-        calculateKappa(allFiles);
+      if (annotations.rightPersonElsewhere) {
+        ctx.fillStyle = '#6b7280'; // Gray
+        annotations.rightPersonElsewhere.forEach(range => {
+          const startX = (range.startFrame / totalFrames) * width;
+          const endX = (range.endFrame / totalFrames) * width;
+          const barWidth = Math.max(1, endX - startX);
+          ctx.fillRect(startX, 0, barWidth, height);
+        });
       }
-    } catch (error) {
-      console.error("Error loading annotation files:", error);
-      alert("Error loading annotation files. Please check the file format and try again.");
-    } finally {
-      setLoading(false);
-      event.target.value = null; // Reset file input
+    } else {
+      // Draw patient annotations
+      if (annotations.leftPersonGaze) {
+        ctx.fillStyle = '#10b981'; // Green
+        annotations.leftPersonGaze.forEach(range => {
+          const startX = (range.startFrame / totalFrames) * width;
+          const endX = (range.endFrame / totalFrames) * width;
+          const barWidth = Math.max(1, endX - startX);
+          ctx.fillRect(startX, 0, barWidth, height);
+        });
+      }
+      
+      if (annotations.leftPersonScreen) {
+        ctx.fillStyle = '#ef4444'; // Red
+        annotations.leftPersonScreen.forEach(range => {
+          const startX = (range.startFrame / totalFrames) * width;
+          const endX = (range.endFrame / totalFrames) * width;
+          const barWidth = Math.max(1, endX - startX);
+          ctx.fillRect(startX, 0, barWidth, height);
+        });
+      }
+      
+      if (annotations.leftPersonElsewhere) {
+        ctx.fillStyle = '#6b7280'; // Gray
+        annotations.leftPersonElsewhere.forEach(range => {
+          const startX = (range.startFrame / totalFrames) * width;
+          const endX = (range.endFrame / totalFrames) * width;
+          const barWidth = Math.max(1, endX - startX);
+          ctx.fillRect(startX, 0, barWidth, height);
+        });
+      }
     }
   };
-  
-  // Remove a file from the list
-  const removeFile = (id) => {
-    setAnnotationFiles(prev => {
-      const updated = prev.filter(file => file.id !== id);
-      
-      // Clear frame interval error when files are removed
-      setFrameIntervalError(null);
-      
-      // Recalculate kappa if we have at least 2 files
-      if (updated.length >= 2) {
-        calculateKappa(updated);
-      } else {
-        setKappaResults(null);
+
+  // Timeline component for individual annotator
+  const TimelineRow = ({ file, type, annotatorName }) => {
+    const canvasRef = useRef(null);
+    
+    useEffect(() => {
+      if (canvasRef.current) {
+        drawTimeline(canvasRef.current, file.data, type, annotatorName);
       }
-      
-      return updated;
-    });
+    }, [file, type, annotatorName]);
+    
+    return (
+      <div className="mb-2">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-sm font-medium text-gray-700">{annotatorName}</span>
+          <span className="text-xs text-gray-500">
+            {type === 'doctor' ? 'Doctor Gaze' : 'Patient Gaze'}
+          </span>
+        </div>
+        <canvas
+          ref={canvasRef}
+          width={800}
+          height={20}
+          className="w-full h-5 rounded border border-gray-200"
+        />
+      </div>
+    );
   };
-  
+
+  // Navigation functions
+  const goToPreviousVideo = () => {
+    const videoNames = getVideoNames();
+    if (currentVideoIndex > 0) {
+      setCurrentVideoIndex(currentVideoIndex - 1);
+      setResults(null);
+    }
+  };
+
+  const goToNextVideo = () => {
+    const videoNames = getVideoNames();
+    if (currentVideoIndex < videoNames.length - 1) {
+      setCurrentVideoIndex(currentVideoIndex + 1);
+      setResults(null);
+    }
+  };
+
   // Convert annotation ranges to simple category lists, including "0" annotations
   const convertToSimpleLists = (files) => {
     const doctorLists = [];
@@ -203,7 +263,7 @@ const KappaAgreement = () => {
       // Get all annotated frames and sort them
       const allFrames = new Set();
       
-      // Collect frames from all annotation types (this won't include "0" annotations since they're not in ranges)
+      // Collect frames from all annotation types
       ['rightPersonGaze', 'rightPersonScreen', 'rightPersonElsewhere', 
        'leftPersonGaze', 'leftPersonScreen', 'leftPersonElsewhere'].forEach(type => {
         if (data[type]) {
@@ -214,11 +274,6 @@ const KappaAgreement = () => {
           });
         }
       });
-      
-      // NOTE: "0" annotations are stored in the raw annotations but not in ranges
-      // For kappa calculation, we need to access the raw annotation data if available
-      // Since we're working with the range format, "0" annotations are implicitly
-      // represented as frames that have no annotation in any category
       
       const sortedFrames = Array.from(allFrames).sort((a, b) => a - b);
       
@@ -233,9 +288,7 @@ const KappaAgreement = () => {
         } else if (data.rightPersonElsewhere?.some(range => frame >= range.startFrame && frame <= range.endFrame)) {
           doctorList.push(3); // Looking elsewhere
         } else {
-          // Frame exists in annotations but not in any specific category
-          // This shouldn't happen with the current logic, but we'll mark as 0 for safety
-          doctorList.push(0); // No interaction
+          doctorList.push(0); // No interaction (shouldn't happen with current logic)
         }
       });
       
@@ -250,9 +303,7 @@ const KappaAgreement = () => {
         } else if (data.leftPersonElsewhere?.some(range => frame >= range.startFrame && frame <= range.endFrame)) {
           patientList.push(3); // Looking elsewhere
         } else {
-          // Frame exists in annotations but not in any specific category
-          // This shouldn't happen with the current logic, but we'll mark as 0 for safety
-          patientList.push(0); // No interaction
+          patientList.push(0); // No interaction (shouldn't happen with current logic)
         }
       });
       
@@ -263,591 +314,559 @@ const KappaAgreement = () => {
     return { doctorLists, patientLists };
   };
 
-  // Calculate average pairwise kappa for multiple raters
-  const calculateAveragePairwiseKappa = (ratingLists) => {
-    if (ratingLists.length < 2) {
-      console.log("Need at least 2 raters for pairwise comparison");
-      return 0;
+  // Calculate Cohen's Kappa for two raters
+  const calculateKappa = (list1, list2) => {
+    if (list1.length === 0 || list2.length === 0 || list1.length !== list2.length) {
+      return { kappa: 0, agreement: 0, total: 0 };
     }
-    
-    let totalKappa = 0;
-    let pairCount = 0;
-    
-    // Calculate kappa for each pair
-    for (let i = 0; i < ratingLists.length; i++) {
-      for (let j = i + 1; j < ratingLists.length; j++) {
-        const kappa = calculateCohenKappaPairwise(ratingLists[i], ratingLists[j]);
-        totalKappa += kappa;
-        pairCount++;
-      }
-    }
-    
-    const averageKappa = pairCount > 0 ? totalKappa / pairCount : 0;
-    console.log(`Average pairwise kappa: ${averageKappa.toFixed(4)} (from ${pairCount} pairs)`);
-    
-    return averageKappa;
-  };
 
-  // Calculate Cohen's kappa for two raters
-  const calculateCohenKappaPairwise = (list1, list2, numCategories = 3) => {
-    const minLength = Math.min(list1.length, list2.length);
+    const n = list1.length;
+    let agreements = 0;
     
-    console.log(`Calculating pairwise kappa for lists of length ${list1.length} and ${list2.length}`);
-    console.log("List 1:", list1.slice(0, 20)); // Show first 20 items
-    console.log("List 2:", list2.slice(0, 20)); // Show first 20 items
-    
-    if (minLength === 0) {
-      console.log("One or both lists are empty, returning 0");
-      return 0;
-    }
-    
-    // Only use overlapping annotations - but don't require both to be truthy
-    const pairs = [];
-    for (let i = 0; i < minLength; i++) {
-      // Include all pairs where both raters made a rating (even if different)
-      if (list1[i] !== undefined && list2[i] !== undefined && list1[i] !== null && list2[i] !== null) {
-        pairs.push([list1[i], list2[i]]);
+    // Count agreements
+    for (let i = 0; i < n; i++) {
+      if (list1[i] === list2[i]) {
+        agreements++;
       }
     }
     
-    console.log(`Found ${pairs.length} valid pairs out of ${minLength} possible`);
-    console.log("First 10 pairs:", pairs.slice(0, 10));
-    
-    if (pairs.length === 0) {
-      console.log("No valid pairs found, returning 0");
-      return 0;
-    }
-    
-    // Calculate observed agreement
-    const agreements = pairs.filter(([a, b]) => a === b).length;
-    const Po = agreements / pairs.length;
-    
-    console.log(`Agreements: ${agreements} out of ${pairs.length} pairs = ${Po.toFixed(3)}`);
+    const observedAgreement = agreements / n;
     
     // Calculate expected agreement
-    const counts1 = Array(numCategories + 1).fill(0);
-    const counts2 = Array(numCategories + 1).fill(0);
+    const categories = [...new Set([...list1, ...list2])];
+    let expectedAgreement = 0;
     
-    pairs.forEach(([a, b]) => {
-      counts1[a]++;
-      counts2[b]++;
+    categories.forEach(category => {
+      const prop1 = list1.filter(x => x === category).length / n;
+      const prop2 = list2.filter(x => x === category).length / n;
+      expectedAgreement += prop1 * prop2;
     });
     
-    console.log("Counts for rater 1:", counts1);
-    console.log("Counts for rater 2:", counts2);
+    const kappa = expectedAgreement === 1 ? 1 : (observedAgreement - expectedAgreement) / (1 - expectedAgreement);
     
-    let Pe = 0;
-    for (let cat = 1; cat <= numCategories; cat++) {
-      const p1 = counts1[cat] / pairs.length;
-      const p2 = counts2[cat] / pairs.length;
-      Pe += p1 * p2;
-    }
-    
-    console.log(`Expected agreement (Pe): ${Pe.toFixed(3)}`);
-    
-    if (Pe >= 1) {
-      const result = Po >= 1 ? 1 : 0;
-      console.log(`Pe >= 1, returning: ${result}`);
-      return result;
-    }
-    
-    const kappa = (Po - Pe) / (1 - Pe);
-    console.log(`Final kappa: (${Po.toFixed(3)} - ${Pe.toFixed(3)}) / (1 - ${Pe.toFixed(3)}) = ${kappa.toFixed(3)}`);
-    
-    return kappa;
+    return {
+      kappa: isNaN(kappa) ? 0 : kappa,
+      agreement: observedAgreement,
+      total: n
+    };
   };
 
-  // Calculate kappa agreement
-  const calculateKappa = (files) => {
-    if (!files || files.length < 2) {
-      setKappaResults(null);
+  // Calculate Fleiss' Kappa for multiple raters
+  const calculateFleissKappa = (lists) => {
+    if (lists.length < 2) return { kappa: 0, agreement: 0, total: 0 };
+    
+    // Find common length (minimum length among all lists)
+    const minLength = Math.min(...lists.map(list => list.length));
+    if (minLength === 0) return { kappa: 0, agreement: 0, total: 0 };
+    
+    // Truncate all lists to common length
+    const truncatedLists = lists.map(list => list.slice(0, minLength));
+    
+    // Get all unique categories
+    const allCategories = [...new Set(truncatedLists.flat())];
+    const k = allCategories.length; // number of categories
+    const n = minLength; // number of items
+    const m = truncatedLists.length; // number of raters
+    
+    if (k === 0 || m === 0) return { kappa: 0, agreement: 0, total: 0 };
+    
+    // Calculate agreement for each item
+    let totalAgreement = 0;
+    for (let i = 0; i < n; i++) {
+      const itemRatings = truncatedLists.map(list => list[i]);
+      const categoryCounts = {};
+      
+      // Count ratings for each category for this item
+      allCategories.forEach(cat => {
+        categoryCounts[cat] = itemRatings.filter(rating => rating === cat).length;
+      });
+      
+      // Calculate agreement for this item
+      let itemAgreement = 0;
+      Object.values(categoryCounts).forEach(count => {
+        itemAgreement += count * (count - 1);
+      });
+      itemAgreement = itemAgreement / (m * (m - 1));
+      totalAgreement += itemAgreement;
+    }
+    
+    const observedAgreement = totalAgreement / n;
+    
+    // Calculate expected agreement
+    const categoryProportions = {};
+    allCategories.forEach(cat => {
+      categoryProportions[cat] = truncatedLists.flat().filter(rating => rating === cat).length / (n * m);
+    });
+    
+    const expectedAgreement = Object.values(categoryProportions).reduce((sum, prop) => sum + prop * prop, 0);
+    
+    const kappa = expectedAgreement === 1 ? 1 : (observedAgreement - expectedAgreement) / (1 - expectedAgreement);
+    
+    return {
+      kappa: isNaN(kappa) ? 0 : kappa,
+      agreement: observedAgreement,
+      total: n
+    };
+  };
+
+  // Calculate kappa for all combinations
+  const calculateAllKappa = () => {
+    const currentVideoFiles = getCurrentVideoFiles();
+    
+    if (currentVideoFiles.length < 2) {
+      alert("Need at least 2 annotation files for the current video to calculate agreement.");
       return;
     }
+
+    const { doctorLists, patientLists } = convertToSimpleLists(currentVideoFiles);
     
-    setLoading(true);
-    
-    try {
-      // Convert files to simple category lists
-      const { doctorLists, patientLists } = convertToSimpleLists(files);
-      
-      // Debug: Output lists to console
-      console.log("=== DEBUGGING CATEGORY LISTS ===");
-      console.log("Doctor Lists:");
-      doctorLists.forEach((list, index) => {
-        console.log(`  File ${index + 1} (${files[index].name}):`, list);
-      });
-      console.log("Patient Lists:");
-      patientLists.forEach((list, index) => {
-        console.log(`  File ${index + 1} (${files[index].name}):`, list);
-      });
-      console.log("================================");
-      
-      // Calculate average pairwise kappa for doctor and patient annotations
-      const doctorAverageKappa = calculateAveragePairwiseKappa(doctorLists);
-      const patientAverageKappa = calculateAveragePairwiseKappa(patientLists);
-      
-      // Calculate pairwise Cohen's kappa for all combinations
-      const doctorPairwise = [];
-      const patientPairwise = [];
-      
-      for (let i = 0; i < files.length; i++) {
-        for (let j = i + 1; j < files.length; j++) {
-          const doctorKappa = calculateCohenKappaPairwise(doctorLists[i], doctorLists[j]);
-          const patientKappa = calculateCohenKappaPairwise(patientLists[i], patientLists[j]);
-          
-          doctorPairwise.push({
-            file1: files[i].name,
-            file2: files[j].name,
-            kappa: doctorKappa
-          });
-          
-          patientPairwise.push({
-            file1: files[i].name,
-            file2: files[j].name,
-            kappa: patientKappa
-          });
-        }
-      }
-      
-      const results = {
-        doctor: {
-          averageKappa: doctorAverageKappa,
-          pairwise: doctorPairwise
-        },
-        patient: {
-          averageKappa: patientAverageKappa,
-          pairwise: patientPairwise
-        }
-      };
-      
-      setKappaResults(results);
-    } catch (error) {
-      console.error("Error calculating kappa:", error);
-      alert("Error calculating kappa agreement. Please check the files and try again.");
-    } finally {
-      setLoading(false);
+    if (doctorLists.length < 2) {
+      alert("Need at least 2 valid annotation files to calculate agreement.");
+      return;
     }
-  };
-  
-  // Draw timelines for visualization
-  const drawAnnotationTimelines = () => {
-    if (annotationFiles.length === 0) return;
+
+    const annotatorNames = getCurrentAnnotators();
+    const pairwiseResults = [];
     
-    // Get total frames from first file or use default
-    const totalFrames = annotationFiles[0]?.data[1]?.videoInfo?.totalFrames || 1000;
-    
-    // Categories for doctor and patient
-    const doctorCategories = ["rightPersonGaze", "rightPersonScreen", "rightPersonElsewhere"];
-    const patientCategories = ["leftPersonGaze", "leftPersonScreen", "leftPersonElsewhere"];
-    
-    // Draw timelines for each file
-    annotationFiles.forEach((file, fileIndex) => {
-      const doctorCanvas = doctorCanvasRefs.current[file.id];
-      const patientCanvas = patientCanvasRefs.current[file.id];
-      
-      if (!doctorCanvas || !patientCanvas) return;
-      
-      // Get annotation data
-      const data = file.data[1]?.manualAnnotations;
-      if (!data) return;
-      
-      // Setup canvas contexts
-      const doctorCtx = doctorCanvas.getContext('2d');
-      const patientCtx = patientCanvas.getContext('2d');
-      
-      // Canvas dimensions
-      const width = doctorCanvas.width;
-      const height = doctorCanvas.height;
-      
-      // Clear canvases
-      doctorCtx.clearRect(0, 0, width, height);
-      patientCtx.clearRect(0, 0, width, height);
-      
-      // Set background
-      doctorCtx.fillStyle = '#e5e7eb'; // Light gray
-      patientCtx.fillStyle = '#e5e7eb';
-      doctorCtx.fillRect(0, 0, width, height);
-      patientCtx.fillRect(0, 0, width, height);
-      
-      // Draw doctor timeline
-      doctorCategories.forEach((category, categoryIndex) => {
-        const ranges = data[category] || [];
+    // Calculate pairwise Cohen's Kappa
+    for (let i = 0; i < doctorLists.length; i++) {
+      for (let j = i + 1; j < doctorLists.length; j++) {
+        const annotator1 = currentVideoFiles[i].data[0]?.annotatorName || `Annotator ${i + 1}`;
+        const annotator2 = currentVideoFiles[j].data[0]?.annotatorName || `Annotator ${j + 1}`;
         
-        switch(categoryIndex) {
-          case 0: doctorCtx.fillStyle = '#3b82f6'; break; // Blue for looking at patient
-          case 1: doctorCtx.fillStyle = '#ef4444'; break; // Red for looking at screen
-          case 2: doctorCtx.fillStyle = '#9ca3af'; break; // Gray for looking elsewhere
-        }
+        const doctorKappa = calculateKappa(doctorLists[i], doctorLists[j]);
+        const patientKappa = calculateKappa(patientLists[i], patientLists[j]);
         
-        ranges.forEach(range => {
-          const startX = Math.floor((range.startFrame / totalFrames) * width);
-          const endX = Math.floor((range.endFrame / totalFrames) * width);
-          const barWidth = Math.max(1, endX - startX);
-          
-          doctorCtx.fillRect(startX, 0, barWidth, height);
+        pairwiseResults.push({
+          pair: `${annotator1} vs ${annotator2}`,
+          doctor: doctorKappa,
+          patient: patientKappa
         });
-      });
-      
-      // Draw patient timeline
-      patientCategories.forEach((category, categoryIndex) => {
-        const ranges = data[category] || [];
-        
-        switch(categoryIndex) {
-          case 0: patientCtx.fillStyle = '#3b82f6'; break; // Blue for looking at doctor
-          case 1: patientCtx.fillStyle = '#ef4444'; break; // Red for looking at screen
-          case 2: patientCtx.fillStyle = '#9ca3af'; break; // Gray for looking elsewhere
-        }
-        
-        ranges.forEach(range => {
-          const startX = Math.floor((range.startFrame / totalFrames) * width);
-          const endX = Math.floor((range.endFrame / totalFrames) * width);
-          const barWidth = Math.max(1, endX - startX);
-          
-          patientCtx.fillRect(startX, 0, barWidth, height);
-        });
-      });
+      }
+    }
+    
+    // Calculate overall Fleiss' Kappa if more than 2 raters
+    const overallResults = {
+      doctor: calculateFleissKappa(doctorLists),
+      patient: calculateFleissKappa(patientLists)
+    };
+    
+    setResults({
+      pairwise: pairwiseResults,
+      overall: overallResults,
+      videoName: getCurrentVideoName(),
+      annotators: annotatorNames,
+      fileCount: currentVideoFiles.length
     });
   };
-  
-  // Draw timelines when files change
-  useEffect(() => {
-    if (annotationFiles.length > 0) {
-      // Allow time for canvas refs to be created
-      setTimeout(drawAnnotationTimelines, 100);
-    }
-  }, [annotationFiles]);
-  
-  // Format kappa value for display
-  const formatKappa = (kappa) => {
-    if (kappa === undefined || kappa === null || isNaN(kappa)) return "N/A";
-    
-    // Round to 2 decimal places
-    const value = Math.round(kappa * 100) / 100;
-    
-    // Add interpretation
-    let interpretation = "";
-    if (value <= 0) interpretation = "Poor";
-    else if (value <= 0.20) interpretation = "Slight";
-    else if (value <= 0.40) interpretation = "Fair";
-    else if (value <= 0.60) interpretation = "Moderate";
-    else if (value <= 0.80) interpretation = "Substantial";
-    else interpretation = "Almost Perfect";
-    
-    return `${value} (${interpretation})`;
+
+  // Interpretation function - Updated to show full -1 to 1 range
+  const interpretKappa = (kappa) => {
+    if (kappa < -0.20) return { text: "Strong Disagreement", color: "text-red-700" };
+    if (kappa < 0) return { text: "Disagreement (worse than chance)", color: "text-red-600" };
+    if (kappa === 0) return { text: "Random Chance Agreement", color: "text-gray-600" };
+    if (kappa < 0.20) return { text: "Slight Agreement", color: "text-yellow-600" };
+    if (kappa < 0.40) return { text: "Fair Agreement", color: "text-yellow-500" };
+    if (kappa < 0.60) return { text: "Moderate Agreement", color: "text-blue-500" };
+    if (kappa < 0.80) return { text: "Substantial Agreement", color: "text-green-500" };
+    return { text: "Almost Perfect Agreement", color: "text-green-600" };
   };
-  
-  // Get background color based on kappa value
-  const getKappaColor = (kappa) => {
-    if (kappa === undefined || kappa === null || isNaN(kappa)) return "bg-gray-100";
-    
-    if (kappa <= 0) return "bg-red-100";
-    else if (kappa <= 0.20) return "bg-red-50";
-    else if (kappa <= 0.40) return "bg-yellow-50";
-    else if (kappa <= 0.60) return "bg-yellow-100";
-    else if (kappa <= 0.80) return "bg-green-100";
-    else return "bg-green-200";
-  };
-  
+
+  const videoNames = getVideoNames();
+  const currentVideoName = getCurrentVideoName();
+  const currentAnnotators = getCurrentAnnotators();
+
   return (
-    <div className="w-full max-w-7xl mx-auto bg-white rounded-lg shadow-lg">
-      <h2 className="text-2xl font-bold text-center py-4 border-b border-gray-200">
-        Kappa Agreement Analysis
+    <div className="w-full max-w-6xl mx-auto bg-white rounded-lg shadow-lg p-6">
+      <h2 className="text-2xl font-bold text-center mb-6 border-b border-gray-200 pb-4">
+        Multi-Video Kappa Agreement Analysis
       </h2>
-      
-      <div className="p-4">
-        {/* Frame Interval Error Alert */}
-        {frameIntervalError && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <div className="flex items-start">
-              <AlertTriangle className="h-5 w-5 text-red-500 mr-3 mt-0.5 flex-shrink-0" />
-              <div>
-                <h3 className="text-sm font-medium text-red-800 mb-1">Frame Interval Mismatch</h3>
-                <p className="text-sm text-red-700">{frameIntervalError}</p>
-                <p className="text-xs text-red-600 mt-2">
-                  All annotation files must use the same frame interval setting from the annotation tool. 
-                  Please re-annotate with consistent settings or upload files with matching intervals.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* File Upload Section */}
-        <div className="mb-6">
-          <div className="flex flex-wrap gap-4 items-center">
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Upload Annotation Files
-              </label>
-              <input
-                type="file"
-                accept=".json"
-                onChange={handleFileUpload}
-                multiple
-                className="block text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 
-                         file:rounded-md file:border-0 file:text-sm file:font-semibold 
-                         file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-              />
-              <div className="text-xs text-gray-500 mt-1">
-                Upload 2 or more annotation files for pairwise kappa analysis. Files must share the same video and frame interval.
-              </div>
-            </div>
-            
-            {annotationFiles.length >= 2 && !frameIntervalError && (
-              <button
-                onClick={() => calculateKappa(annotationFiles)}
-                disabled={loading || annotationFiles.length < 2}
-                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors flex items-center disabled:bg-gray-400"
-              >
-                {loading ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <BarChart3 className="h-4 w-4 mr-2" />}
-                Calculate Pairwise Kappa
-              </button>
-            )}
-          </div>
-        </div>
-        
-        {/* File List */}
-        {annotationFiles.length > 0 && (
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-2">Uploaded Files</h3>
-            <div className="space-y-2">
-              {annotationFiles.map((file) => (
-                <div key={file.id} className="flex items-center justify-between bg-gray-50 p-3 rounded-md">
-                  <div className="flex-1 truncate">{file.name}</div>
-                  <button
-                    onClick={() => removeFile(file.id)}
-                    className="ml-2 text-red-500 hover:text-red-700"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        {/* Timelines Visualization */}
-        {annotationFiles.length > 0 && !frameIntervalError && (
-          <div className="mb-8">
-            <h3 className="text-lg font-semibold mb-4">Annotation Timelines</h3>
-            
-            <div className="flex mb-2">
-              <div className="w-1/2 pr-2">
-                <div className="text-center font-medium text-sm text-gray-700 mb-1">Doctor Gaze</div>
-                <div className="flex space-x-2 mb-1 text-xs">
-                  <div className="flex items-center">
-                    <span className="inline-block w-3 h-3 rounded bg-blue-500 mr-1"></span>
-                    <span>Patient</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="inline-block w-3 h-3 rounded bg-red-500 mr-1"></span>
-                    <span>Screen</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="inline-block w-3 h-3 rounded bg-gray-400 mr-1"></span>
-                    <span>Elsewhere</span>
-                  </div>
-                </div>
-              </div>
-              <div className="w-1/2 pl-2">
-                <div className="text-center font-medium text-sm text-gray-700 mb-1">Patient Gaze</div>
-                <div className="flex space-x-2 mb-1 text-xs">
-                  <div className="flex items-center">
-                    <span className="inline-block w-3 h-3 rounded bg-blue-500 mr-1"></span>
-                    <span>Doctor</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="inline-block w-3 h-3 rounded bg-red-500 mr-1"></span>
-                    <span>Screen</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="inline-block w-3 h-3 rounded bg-gray-400 mr-1"></span>
-                    <span>Elsewhere</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              {annotationFiles.map((file) => (
-                <div key={file.id} className="flex">
-                  <div className="w-1/2 pr-2">
-                    <div className="flex items-center mb-1">
-                      <div className="text-xs font-medium text-gray-700 truncate flex-1">
-                        {file.name}
-                      </div>
-                    </div>
-                    <canvas
-                      ref={(el) => doctorCanvasRefs.current[file.id] = el}
-                      width={1000}
-                      height={20}
-                      className="w-full h-5 rounded"
-                    />
-                  </div>
-                  <div className="w-1/2 pl-2">
-                    <div className="flex items-center mb-1">
-                      <div className="text-xs font-medium text-gray-700 truncate flex-1">
-                        {file.name}
-                      </div>
-                    </div>
-                    <canvas
-                      ref={(el) => patientCanvasRefs.current[file.id] = el}
-                      width={1000}
-                      height={20}
-                      className="w-full h-5 rounded"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        {/* Kappa Results */}
-        {kappaResults && !frameIntervalError && (
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Pairwise Kappa Agreement Results</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              {/* Doctor Fleiss's Kappa */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="text-base font-medium mb-3">Doctor Gaze Agreement</h4>
-                
-                <div className={`mb-4 p-3 rounded-md ${getKappaColor(kappaResults.doctor.averageKappa)}`}>
-                  <div className="font-medium mb-1">Average Pairwise Kappa:</div>
-                  <div className="text-2xl font-bold">{formatKappa(kappaResults.doctor.averageKappa)}</div>
-                </div>
-              </div>
-              
-              {/* Patient Fleiss's Kappa */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h4 className="text-base font-medium mb-3">Patient Gaze Agreement</h4>
-                
-                <div className={`mb-4 p-3 rounded-md ${getKappaColor(kappaResults.patient.averageKappa)}`}>
-                  <div className="font-medium mb-1">Average Pairwise Kappa:</div>
-                  <div className="text-2xl font-bold">{formatKappa(kappaResults.patient.averageKappa)}</div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Pairwise Comparisons */}
-            <div className="mt-6">
-              <h4 className="text-base font-medium mb-3">Pairwise Cohen's Kappa Comparisons</h4>
-              
-              <div className="overflow-x-auto">
-                <table className="min-w-full bg-white rounded-lg overflow-hidden">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="py-2 px-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                        File Pair
-                      </th>
-                      <th className="py-2 px-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                        Doctor Kappa
-                      </th>
-                      <th className="py-2 px-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                        Patient Kappa
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {kappaResults.doctor.pairwise.map((pair, index) => (
-                      <tr key={index} className="hover:bg-gray-50">
-                        <td className="py-2 px-3 text-sm">
-                          <div className="truncate max-w-xs">
-                            {pair.file1} <span className="text-gray-400">vs</span> {pair.file2}
-                          </div>
-                        </td>
-                        <td className={`py-2 px-3 text-sm ${getKappaColor(pair.kappa)}`}>
-                          {formatKappa(pair.kappa)}
-                        </td>
-                        <td className={`py-2 px-3 text-sm ${getKappaColor(kappaResults.patient.pairwise[index]?.kappa)}`}>
-                          {formatKappa(kappaResults.patient.pairwise[index]?.kappa)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              
-              {/* Kappa Interpretation Guide */}
-              <div className="mt-6 bg-gray-50 p-3 rounded-md">
-                <h5 className="text-sm font-medium mb-2">Kappa Interpretation Guide</h5>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
-                  <div className="flex items-center">
-                    <span className="inline-block w-3 h-3 bg-red-100 mr-1 rounded"></span>
-                    <span>≤ 0: Poor</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="inline-block w-3 h-3 bg-red-50 mr-1 rounded"></span>
-                    <span>0.01-0.20: Slight</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="inline-block w-3 h-3 bg-yellow-50 mr-1 rounded"></span>
-                    <span>0.21-0.40: Fair</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="inline-block w-3 h-3 bg-yellow-100 mr-1 rounded"></span>
-                    <span>0.41-0.60: Moderate</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="inline-block w-3 h-3 bg-green-100 mr-1 rounded"></span>
-                    <span>0.61-0.80: Substantial</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="inline-block w-3 h-3 bg-green-200 mr-1 rounded"></span>
-                    <span>0.81-1.00: Almost Perfect</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        {/* Need 2+ Files Message */}
-        {annotationFiles.length > 0 && annotationFiles.length < 2 && !frameIntervalError && (
-          <div className="py-8 text-center bg-yellow-50 rounded-lg border border-yellow-200">
-            <div className="text-yellow-600 mb-2">
-              <AlertTriangle className="h-8 w-8 mx-auto" />
-            </div>
-            <h3 className="text-lg font-medium text-yellow-800 mb-2">
-              Need {2 - annotationFiles.length} More File{2 - annotationFiles.length > 1 ? 's' : ''}
-            </h3>
-            <p className="text-yellow-700 max-w-md mx-auto">
-              Pairwise kappa requires at least 2 annotation files. Please upload {2 - annotationFiles.length} more file{2 - annotationFiles.length > 1 ? 's' : ''} to calculate inter-rater agreement.
-            </p>
-          </div>
-        )}
-        
-        {/* No Files Uploaded Message */}
-        {annotationFiles.length === 0 && (
-          <div className="py-12 text-center">
-            <div className="text-gray-500 mb-4">
-              <Upload className="h-12 w-12 mx-auto text-gray-400" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Annotation Files Uploaded</h3>
-            <p className="text-gray-500 max-w-md mx-auto">
-              Upload 2 or more annotation JSON files to calculate pairwise kappa agreement between raters and visualize timeline comparisons.
-            </p>
-          </div>
-        )}
-        
-        {/* Instructions */}
-        <div className="mt-8 bg-blue-50 p-4 rounded-md">
-          <h4 className="text-base font-medium text-blue-800 mb-2">How to Use This Tool</h4>
-          <ul className="list-disc list-inside text-sm text-blue-700 space-y-1">
-            <li>Upload <strong>2 or more</strong> annotation files (JSON) containing gaze annotations from different raters</li>
-            <li>Files should be from the same video for valid comparison</li>
-            <li><strong>All files must use the same frame interval setting</strong> (e.g., all annotated every 10 frames)</li>
-            <li>The tool will calculate average pairwise kappa for overall agreement between all raters</li>
-            <li>Individual pairwise Cohen's kappa shows agreement between each pair of raters</li>
-            <li>Kappa values range from -1 to 1, with 1 being perfect agreement</li>
-            <li>Visualize timelines for each file to see differences</li>
-            <li>Use this to evaluate inter-rater reliability in annotation studies</li>
-          </ul>
-        </div>
+
+      {/* File Upload */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Upload Multiple Annotation Files (JSON)
+        </label>
+        <input
+          type="file"
+          accept=".json"
+          multiple
+          onChange={handleFileUpload}
+          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 
+                   file:rounded-md file:border-0 file:text-sm file:font-semibold 
+                   file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          Upload JSON annotation files from multiple annotators and videos
+        </p>
       </div>
+
+      {/* Video Navigation */}
+      {videoNames.length > 0 && (
+        <div className="mb-6 bg-gray-50 rounded-lg p-4">
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={goToPreviousVideo}
+              disabled={currentVideoIndex === 0}
+              className="flex items-center px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Previous
+            </button>
+
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-2">
+                <Video className="h-5 w-5 mr-2 text-blue-600" />
+                <h3 className="text-lg font-semibold text-gray-800">
+                  {currentVideoName}
+                </h3>
+              </div>
+              <p className="text-sm text-gray-600">
+                Video {currentVideoIndex + 1} of {videoNames.length}
+              </p>
+            </div>
+
+            <button
+              onClick={goToNextVideo}
+              disabled={currentVideoIndex === videoNames.length - 1}
+              className="flex items-center px-3 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+            >
+              Next
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </button>
+          </div>
+
+          {/* Current Video Info */}
+          <div className="bg-white rounded-md p-3 border">
+            <div className="flex items-center mb-2">
+              <Users className="h-4 w-4 mr-2 text-green-600" />
+              <span className="font-medium text-gray-700">
+                Annotators ({currentAnnotators.length}):
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {currentAnnotators.map((annotator, index) => (
+                <span
+                  key={index}
+                  className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                >
+                  {annotator}
+                </span>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-2">
+              {getCurrentVideoFiles().length} annotation files for this video
+            </p>
+          </div>
+
+          {/* Calculate Button */}
+          <button
+            onClick={calculateAllKappa}
+            disabled={getCurrentVideoFiles().length < 2}
+            className="w-full mt-4 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+          >
+            Calculate Kappa Agreement for {currentVideoName}
+          </button>
+
+          {/* Timeline Toggle */}
+          {getCurrentVideoFiles().length > 0 && (
+            <button
+              onClick={() => setShowTimelines(!showTimelines)}
+              className="w-full mt-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center justify-center"
+            >
+              {showTimelines ? (
+                <>
+                  <EyeOff className="h-4 w-4 mr-2" />
+                  Hide Timeline Visualization
+                </>
+              ) : (
+                <>
+                  <Eye className="h-4 w-4 mr-2" />
+                  Show Timeline Visualization
+                </>
+              )}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Timeline Visualization */}
+      {showTimelines && getCurrentVideoFiles().length > 0 && (
+        <div className="mb-6 bg-white rounded-lg border border-gray-200 p-4">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center">
+              <BarChart3 className="h-5 w-5 mr-2 text-purple-600" />
+              <h3 className="text-lg font-semibold text-gray-800">
+                Timeline Visualization: {getCurrentVideoName()}
+              </h3>
+            </div>
+            <div className="text-sm text-gray-500">
+              Total Frames: {getTotalFrames()}
+            </div>
+          </div>
+
+          {/* Color Legend */}
+          <div className="mb-4 p-3 bg-gray-50 rounded-md">
+            <h4 className="text-sm font-medium text-gray-700 mb-2">Color Legend:</h4>
+            <div className="flex flex-wrap gap-4 text-xs">
+              <div className="flex items-center">
+                <span className="w-4 h-4 bg-green-500 rounded mr-1"></span>
+                <span>Looking at Patient/Doctor</span>
+              </div>
+              <div className="flex items-center">
+                <span className="w-4 h-4 bg-red-500 rounded mr-1"></span>
+                <span>Looking at Screen</span>
+              </div>
+              <div className="flex items-center">
+                <span className="w-4 h-4 bg-gray-500 rounded mr-1"></span>
+                <span>Looking Elsewhere</span>
+              </div>
+              <div className="flex items-center">
+                <span className="w-4 h-4 bg-gray-300 rounded mr-1"></span>
+                <span>No Annotation</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Doctor Gaze Timelines */}
+          <div className="mb-6">
+            <h4 className="text-md font-semibold text-blue-800 mb-3 border-b border-blue-200 pb-1">
+              Doctor Gaze Annotations
+            </h4>
+            <div className="space-y-2">
+              {getCurrentVideoFiles().map((file, index) => {
+                const annotatorName = file.data[0]?.annotatorName || `Annotator ${index + 1}`;
+                return (
+                  <TimelineRow
+                    key={`doctor-${index}`}
+                    file={file}
+                    type="doctor"
+                    annotatorName={annotatorName}
+                  />
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Patient Gaze Timelines */}
+          <div>
+            <h4 className="text-md font-semibold text-green-800 mb-3 border-b border-green-200 pb-1">
+              Patient Gaze Annotations
+            </h4>
+            <div className="space-y-2">
+              {getCurrentVideoFiles().map((file, index) => {
+                const annotatorName = file.data[0]?.annotatorName || `Annotator ${index + 1}`;
+                return (
+                  <TimelineRow
+                    key={`patient-${index}`}
+                    file={file}
+                    type="patient"
+                    annotatorName={annotatorName}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Results Display */}
+      {results && (
+        <div className="space-y-6">
+          <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+            <h3 className="text-lg font-semibold text-blue-800 mb-2">
+              Results for: {results.videoName}
+            </h3>
+            <p className="text-sm text-blue-700">
+              {results.fileCount} annotation files from {results.annotators.length} annotators
+            </p>
+          </div>
+
+          {/* Overall Kappa (Fleiss') */}
+          {results.fileCount > 2 && (
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <h4 className="text-lg font-semibold mb-4 text-gray-800">
+                Overall Agreement (Fleiss' Kappa)
+              </h4>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h5 className="font-medium text-gray-700 mb-2">Doctor Gaze</h5>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>Kappa:</span>
+                      <span className={`font-medium ${interpretKappa(results.overall.doctor.kappa).color}`}>
+                        {results.overall.doctor.kappa.toFixed(3)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Interpretation:</span>
+                      <span className={`text-sm ${interpretKappa(results.overall.doctor.kappa).color}`}>
+                        {interpretKappa(results.overall.doctor.kappa).text}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>Observed Agreement:</span>
+                      <span>{(results.overall.doctor.agreement * 100).toFixed(1)}%</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>Total Comparisons:</span>
+                      <span>{results.overall.doctor.total}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h5 className="font-medium text-gray-700 mb-2">Patient Gaze</h5>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span>Kappa:</span>
+                      <span className={`font-medium ${interpretKappa(results.overall.patient.kappa).color}`}>
+                        {results.overall.patient.kappa.toFixed(3)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Interpretation:</span>
+                      <span className={`text-sm ${interpretKappa(results.overall.patient.kappa).color}`}>
+                        {interpretKappa(results.overall.patient.kappa).text}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>Observed Agreement:</span>
+                      <span>{(results.overall.patient.agreement * 100).toFixed(1)}%</span>
+                    </div>
+                    <div className="flex justify-between text-sm text-gray-600">
+                      <span>Total Comparisons:</span>
+                      <span>{results.overall.patient.total}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Pairwise Results */}
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <h4 className="text-lg font-semibold mb-4 text-gray-800">
+              Pairwise Agreement (Cohen's Kappa)
+            </h4>
+            
+            <div className="space-y-4">
+              {results.pairwise.map((pair, index) => (
+                <div key={index} className="border border-gray-200 rounded-lg p-4">
+                  <h5 className="font-medium text-gray-700 mb-3">{pair.pair}</h5>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-blue-50 rounded-lg p-3">
+                      <h6 className="font-medium text-blue-800 mb-2">Doctor Gaze</h6>
+                      <div className="space-y-1 text-sm">
+                        <div className="flex justify-between">
+                          <span>Kappa:</span>
+                          <span className={`font-medium ${interpretKappa(pair.doctor.kappa).color}`}>
+                            {pair.doctor.kappa.toFixed(3)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Agreement:</span>
+                          <span>{(pair.doctor.agreement * 100).toFixed(1)}%</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Total:</span>
+                          <span>{pair.doctor.total}</span>
+                        </div>
+                        <div className={`text-xs ${interpretKappa(pair.doctor.kappa).color}`}>
+                          {interpretKappa(pair.doctor.kappa).text}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-green-50 rounded-lg p-3">
+                      <h6 className="font-medium text-green-800 mb-2">Patient Gaze</h6>
+                      <div className="space-y-1 text-sm">
+                        <div className="flex justify-between">
+                          <span>Kappa:</span>
+                          <span className={`font-medium ${interpretKappa(pair.patient.kappa).color}`}>
+                            {pair.patient.kappa.toFixed(3)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Agreement:</span>
+                          <span>{(pair.patient.agreement * 100).toFixed(1)}%</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Total:</span>
+                          <span>{pair.patient.total}</span>
+                        </div>
+                        <div className={`text-xs ${interpretKappa(pair.patient.kappa).color}`}>
+                          {interpretKappa(pair.patient.kappa).text}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Kappa Interpretation Guide */}
+          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <h4 className="font-medium text-gray-700 mb-3">Kappa Interpretation Guide (-1 to +1 scale)</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2 text-sm">
+              <div className="flex items-center">
+                <span className="w-3 h-3 bg-red-700 rounded mr-2"></span>
+                <span>&lt; -0.20: Strong Disagreement</span>
+              </div>
+              <div className="flex items-center">
+                <span className="w-3 h-3 bg-red-600 rounded mr-2"></span>
+                <span>-0.20 to 0.00: Disagreement</span>
+              </div>
+              <div className="flex items-center">
+                <span className="w-3 h-3 bg-gray-600 rounded mr-2"></span>
+                <span>0.00: Random Chance</span>
+              </div>
+              <div className="flex items-center">
+                <span className="w-3 h-3 bg-yellow-600 rounded mr-2"></span>
+                <span>0.00-0.20: Slight Agreement</span>
+              </div>
+              <div className="flex items-center">
+                <span className="w-3 h-3 bg-yellow-500 rounded mr-2"></span>
+                <span>0.21-0.40: Fair Agreement</span>
+              </div>
+              <div className="flex items-center">
+                <span className="w-3 h-3 bg-blue-500 rounded mr-2"></span>
+                <span>0.41-0.60: Moderate Agreement</span>
+              </div>
+              <div className="flex items-center">
+                <span className="w-3 h-3 bg-green-500 rounded mr-2"></span>
+                <span>0.61-0.80: Substantial Agreement</span>
+              </div>
+              <div className="flex items-center">
+                <span className="w-3 h-3 bg-green-600 rounded mr-2"></span>
+                <span>0.81-1.00: Almost Perfect</span>
+              </div>
+            </div>
+            <div className="mt-3 p-3 bg-blue-50 rounded border border-blue-200">
+              <p className="text-xs text-blue-700">
+                <strong>Note:</strong> Kappa ranges from -1 (perfect disagreement) to +1 (perfect agreement). 
+                0 represents agreement expected by random chance. Negative values indicate systematic disagreement.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Help Text */}
+      {files.length === 0 && (
+        <div className="text-center text-gray-500 py-8">
+          <Upload className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+          <p className="text-lg mb-2">Upload annotation files to get started</p>
+          <p className="text-sm">
+            Upload multiple JSON annotation files from different annotators and videos to calculate inter-rater agreement.
+          </p>
+        </div>
+      )}
     </div>
   );
 };
 
-export default KappaAgreement;
+export default KappaAgreementAnalysis;
