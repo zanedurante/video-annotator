@@ -142,11 +142,7 @@ const KappaAgreement = () => {
       // Validate frame intervals for all files (existing + new)
       const allFiles = [...annotationFiles, ...newAnnotationFiles];
       
-      // Check for exactly 3 files
-      if (allFiles.length > 3) {
-        alert("Error: Maximum of 3 annotation files allowed for Fleiss's kappa calculation.");
-        return;
-      }
+      // Allow unlimited files for pairwise comparison
       
       const validation = validateFrameIntervals(allFiles);
       
@@ -159,8 +155,8 @@ const KappaAgreement = () => {
       // If validation passes, add the files
       setAnnotationFiles(allFiles);
       
-      // Calculate kappa if we have exactly 3 files
-      if (allFiles.length === 3) {
+      // Calculate kappa if we have at least 2 files
+      if (allFiles.length >= 2) {
         calculateKappa(allFiles);
       }
     } catch (error) {
@@ -180,8 +176,8 @@ const KappaAgreement = () => {
       // Clear frame interval error when files are removed
       setFrameIntervalError(null);
       
-      // Recalculate kappa if we have exactly 3 files
-      if (updated.length === 3) {
+      // Recalculate kappa if we have at least 2 files
+      if (updated.length >= 2) {
         calculateKappa(updated);
       } else {
         setKappaResults(null);
@@ -191,7 +187,7 @@ const KappaAgreement = () => {
     });
   };
   
-  // Convert annotation ranges to simple category lists
+  // Convert annotation ranges to simple category lists, including "0" annotations
   const convertToSimpleLists = (files) => {
     const doctorLists = [];
     const patientLists = [];
@@ -207,7 +203,7 @@ const KappaAgreement = () => {
       // Get all annotated frames and sort them
       const allFrames = new Set();
       
-      // Collect frames from all annotation types
+      // Collect frames from all annotation types (this won't include "0" annotations since they're not in ranges)
       ['rightPersonGaze', 'rightPersonScreen', 'rightPersonElsewhere', 
        'leftPersonGaze', 'leftPersonScreen', 'leftPersonElsewhere'].forEach(type => {
         if (data[type]) {
@@ -218,6 +214,11 @@ const KappaAgreement = () => {
           });
         }
       });
+      
+      // NOTE: "0" annotations are stored in the raw annotations but not in ranges
+      // For kappa calculation, we need to access the raw annotation data if available
+      // Since we're working with the range format, "0" annotations are implicitly
+      // represented as frames that have no annotation in any category
       
       const sortedFrames = Array.from(allFrames).sort((a, b) => a - b);
       
@@ -231,6 +232,10 @@ const KappaAgreement = () => {
           doctorList.push(2); // Looking at screen
         } else if (data.rightPersonElsewhere?.some(range => frame >= range.startFrame && frame <= range.endFrame)) {
           doctorList.push(3); // Looking elsewhere
+        } else {
+          // Frame exists in annotations but not in any specific category
+          // This shouldn't happen with the current logic, but we'll mark as 0 for safety
+          doctorList.push(0); // No interaction
         }
       });
       
@@ -244,6 +249,10 @@ const KappaAgreement = () => {
           patientList.push(2); // Looking at screen
         } else if (data.leftPersonElsewhere?.some(range => frame >= range.startFrame && frame <= range.endFrame)) {
           patientList.push(3); // Looking elsewhere
+        } else {
+          // Frame exists in annotations but not in any specific category
+          // This shouldn't happen with the current logic, but we'll mark as 0 for safety
+          patientList.push(0); // No interaction
         }
       });
       
@@ -254,88 +263,29 @@ const KappaAgreement = () => {
     return { doctorLists, patientLists };
   };
 
-  // Calculate Fleiss's kappa for multiple raters (exact implementation from Python)
-  const calculateFleissKappa = (ratingLists, numCategories = 3) => {
-    if (ratingLists.length !== 3) {
-      console.log("Fleiss's kappa requires exactly 3 raters");
+  // Calculate average pairwise kappa for multiple raters
+  const calculateAveragePairwiseKappa = (ratingLists) => {
+    if (ratingLists.length < 2) {
+      console.log("Need at least 2 raters for pairwise comparison");
       return 0;
     }
     
-    // Find the minimum length across all lists (only use overlapping items)
-    const minLength = Math.min(...ratingLists.map(list => list.length));
+    let totalKappa = 0;
+    let pairCount = 0;
     
-    if (minLength === 0) {
-      console.log("No overlapping ratings found");
-      return 0;
-    }
-    
-    // Create ratings array: each item is [rater1_rating, rater2_rating, rater3_rating]
-    const ratings = [];
-    for (let i = 0; i < minLength; i++) {
-      const itemRatings = [ratingLists[0][i], ratingLists[1][i], ratingLists[2][i]];
-      // Only include items where all raters provided ratings
-      if (itemRatings.every(rating => rating !== undefined && rating !== null)) {
-        ratings.push(itemRatings);
+    // Calculate kappa for each pair
+    for (let i = 0; i < ratingLists.length; i++) {
+      for (let j = i + 1; j < ratingLists.length; j++) {
+        const kappa = calculateCohenKappaPairwise(ratingLists[i], ratingLists[j]);
+        totalKappa += kappa;
+        pairCount++;
       }
     }
     
-    console.log(`Fleiss kappa: Processing ${ratings.length} items with 3 raters each`);
-    console.log("Sample ratings:", ratings.slice(0, 10));
+    const averageKappa = pairCount > 0 ? totalKappa / pairCount : 0;
+    console.log(`Average pairwise kappa: ${averageKappa.toFixed(4)} (from ${pairCount} pairs)`);
     
-    if (ratings.length === 0) {
-      console.log("No valid ratings found for Fleiss kappa");
-      return 0;
-    }
-    
-    const N = ratings.length; // number of items
-    const n = 3; // number of raters per item
-    
-    // Step 1: Create a count matrix (N x k) for how many times each category was assigned
-    const countMatrix = [];
-    for (const item of ratings) {
-      const counts = Array(numCategories).fill(0);
-      for (const r of item) {
-        if (r >= 1 && r <= numCategories) {
-          counts[r - 1] += 1; // Convert 1-indexed to 0-indexed
-        }
-      }
-      countMatrix.push(counts);
-    }
-    
-    console.log("Count matrix (first 5 items):", countMatrix.slice(0, 5));
-    
-    // Step 2: Compute P_bar (mean of individual agreement scores)
-    let P_total = 0;
-    for (const counts of countMatrix) {
-      const itemTotal = counts.reduce((sum, c) => sum + c * (c - 1), 0);
-      const P_i = itemTotal / (n * (n - 1));
-      P_total += P_i;
-    }
-    const P_bar = P_total / N;
-    
-    console.log(`P_bar (observed agreement): ${P_bar.toFixed(4)}`);
-    
-    // Step 3: Compute P_e_bar (expected agreement by chance)
-    const categoryTotals = Array(numCategories).fill(0);
-    for (const counts of countMatrix) {
-      for (let j = 0; j < numCategories; j++) {
-        categoryTotals[j] += counts[j];
-      }
-    }
-    
-    const p_j = categoryTotals.map(total => total / (N * n));
-    const P_e_bar = p_j.reduce((sum, p) => sum + p * p, 0);
-    
-    console.log("Category totals:", categoryTotals);
-    console.log("Category proportions:", p_j.map(p => p.toFixed(4)));
-    console.log(`P_e_bar (expected agreement): ${P_e_bar.toFixed(4)}`);
-    
-    // Step 4: Compute Fleiss's kappa
-    const kappa = (1 - P_e_bar) !== 0 ? (P_bar - P_e_bar) / (1 - P_e_bar) : 1.0;
-    
-    console.log(`Fleiss kappa: (${P_bar.toFixed(4)} - ${P_e_bar.toFixed(4)}) / (1 - ${P_e_bar.toFixed(4)}) = ${kappa.toFixed(4)}`);
-    
-    return kappa;
+    return averageKappa;
   };
 
   // Calculate Cohen's kappa for two raters
@@ -409,7 +359,7 @@ const KappaAgreement = () => {
 
   // Calculate kappa agreement
   const calculateKappa = (files) => {
-    if (!files || files.length !== 3) {
+    if (!files || files.length < 2) {
       setKappaResults(null);
       return;
     }
@@ -432,16 +382,16 @@ const KappaAgreement = () => {
       });
       console.log("================================");
       
-      // Calculate Fleiss's kappa for doctor and patient annotations
-      const doctorFleissKappa = calculateFleissKappa(doctorLists);
-      const patientFleissKappa = calculateFleissKappa(patientLists);
+      // Calculate average pairwise kappa for doctor and patient annotations
+      const doctorAverageKappa = calculateAveragePairwiseKappa(doctorLists);
+      const patientAverageKappa = calculateAveragePairwiseKappa(patientLists);
       
       // Calculate pairwise Cohen's kappa for all combinations
       const doctorPairwise = [];
       const patientPairwise = [];
       
-      for (let i = 0; i < 3; i++) {
-        for (let j = i + 1; j < 3; j++) {
+      for (let i = 0; i < files.length; i++) {
+        for (let j = i + 1; j < files.length; j++) {
           const doctorKappa = calculateCohenKappaPairwise(doctorLists[i], doctorLists[j]);
           const patientKappa = calculateCohenKappaPairwise(patientLists[i], patientLists[j]);
           
@@ -461,11 +411,11 @@ const KappaAgreement = () => {
       
       const results = {
         doctor: {
-          fleissKappa: doctorFleissKappa,
+          averageKappa: doctorAverageKappa,
           pairwise: doctorPairwise
         },
         patient: {
-          fleissKappa: patientFleissKappa,
+          averageKappa: patientAverageKappa,
           pairwise: patientPairwise
         }
       };
@@ -524,7 +474,7 @@ const KappaAgreement = () => {
         const ranges = data[category] || [];
         
         switch(categoryIndex) {
-          case 0: doctorCtx.fillStyle = '#1bd018'; break; // Blue for looking at patient
+          case 0: doctorCtx.fillStyle = '#3b82f6'; break; // Blue for looking at patient
           case 1: doctorCtx.fillStyle = '#ef4444'; break; // Red for looking at screen
           case 2: doctorCtx.fillStyle = '#9ca3af'; break; // Gray for looking elsewhere
         }
@@ -543,7 +493,7 @@ const KappaAgreement = () => {
         const ranges = data[category] || [];
         
         switch(categoryIndex) {
-          case 0: patientCtx.fillStyle = '#1bd018'; break; // Green for looking at doctor
+          case 0: patientCtx.fillStyle = '#3b82f6'; break; // Blue for looking at doctor
           case 1: patientCtx.fillStyle = '#ef4444'; break; // Red for looking at screen
           case 2: patientCtx.fillStyle = '#9ca3af'; break; // Gray for looking elsewhere
         }
@@ -639,18 +589,18 @@ const KappaAgreement = () => {
                          file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
               />
               <div className="text-xs text-gray-500 mt-1">
-                Upload exactly 3 annotation files for Fleiss's kappa analysis. Files must share the same video and frame interval.
+                Upload 2 or more annotation files for pairwise kappa analysis. Files must share the same video and frame interval.
               </div>
             </div>
             
-            {annotationFiles.length >= 3 && !frameIntervalError && (
+            {annotationFiles.length >= 2 && !frameIntervalError && (
               <button
                 onClick={() => calculateKappa(annotationFiles)}
-                disabled={loading || annotationFiles.length !== 3}
+                disabled={loading || annotationFiles.length < 2}
                 className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors flex items-center disabled:bg-gray-400"
               >
                 {loading ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <BarChart3 className="h-4 w-4 mr-2" />}
-                Calculate Fleiss's Kappa
+                Calculate Pairwise Kappa
               </button>
             )}
           </div>
@@ -686,7 +636,7 @@ const KappaAgreement = () => {
                 <div className="text-center font-medium text-sm text-gray-700 mb-1">Doctor Gaze</div>
                 <div className="flex space-x-2 mb-1 text-xs">
                   <div className="flex items-center">
-                    <span className="inline-block w-3 h-3 rounded bg-green-500 mr-1"></span>
+                    <span className="inline-block w-3 h-3 rounded bg-blue-500 mr-1"></span>
                     <span>Patient</span>
                   </div>
                   <div className="flex items-center">
@@ -703,7 +653,7 @@ const KappaAgreement = () => {
                 <div className="text-center font-medium text-sm text-gray-700 mb-1">Patient Gaze</div>
                 <div className="flex space-x-2 mb-1 text-xs">
                   <div className="flex items-center">
-                    <span className="inline-block w-3 h-3 rounded bg-green-500 mr-1"></span>
+                    <span className="inline-block w-3 h-3 rounded bg-blue-500 mr-1"></span>
                     <span>Doctor</span>
                   </div>
                   <div className="flex items-center">
@@ -756,16 +706,16 @@ const KappaAgreement = () => {
         {/* Kappa Results */}
         {kappaResults && !frameIntervalError && (
           <div>
-            <h3 className="text-lg font-semibold mb-4">Fleiss's Kappa Agreement Results</h3>
+            <h3 className="text-lg font-semibold mb-4">Pairwise Kappa Agreement Results</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               {/* Doctor Fleiss's Kappa */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <h4 className="text-base font-medium mb-3">Doctor Gaze Agreement</h4>
                 
-                <div className={`mb-4 p-3 rounded-md ${getKappaColor(kappaResults.doctor.fleissKappa)}`}>
-                  <div className="font-medium mb-1">Fleiss's Kappa (3 Raters):</div>
-                  <div className="text-2xl font-bold">{formatKappa(kappaResults.doctor.fleissKappa)}</div>
+                <div className={`mb-4 p-3 rounded-md ${getKappaColor(kappaResults.doctor.averageKappa)}`}>
+                  <div className="font-medium mb-1">Average Pairwise Kappa:</div>
+                  <div className="text-2xl font-bold">{formatKappa(kappaResults.doctor.averageKappa)}</div>
                 </div>
               </div>
               
@@ -773,9 +723,9 @@ const KappaAgreement = () => {
               <div className="bg-gray-50 rounded-lg p-4">
                 <h4 className="text-base font-medium mb-3">Patient Gaze Agreement</h4>
                 
-                <div className={`mb-4 p-3 rounded-md ${getKappaColor(kappaResults.patient.fleissKappa)}`}>
-                  <div className="font-medium mb-1">Fleiss's Kappa (3 Raters):</div>
-                  <div className="text-2xl font-bold">{formatKappa(kappaResults.patient.fleissKappa)}</div>
+                <div className={`mb-4 p-3 rounded-md ${getKappaColor(kappaResults.patient.averageKappa)}`}>
+                  <div className="font-medium mb-1">Average Pairwise Kappa:</div>
+                  <div className="text-2xl font-bold">{formatKappa(kappaResults.patient.averageKappa)}</div>
                 </div>
               </div>
             </div>
@@ -853,17 +803,17 @@ const KappaAgreement = () => {
           </div>
         )}
         
-        {/* Need 3 Files Message */}
-        {annotationFiles.length > 0 && annotationFiles.length < 3 && !frameIntervalError && (
+        {/* Need 2+ Files Message */}
+        {annotationFiles.length > 0 && annotationFiles.length < 2 && !frameIntervalError && (
           <div className="py-8 text-center bg-yellow-50 rounded-lg border border-yellow-200">
             <div className="text-yellow-600 mb-2">
               <AlertTriangle className="h-8 w-8 mx-auto" />
             </div>
             <h3 className="text-lg font-medium text-yellow-800 mb-2">
-              Need {3 - annotationFiles.length} More File{3 - annotationFiles.length > 1 ? 's' : ''}
+              Need {2 - annotationFiles.length} More File{2 - annotationFiles.length > 1 ? 's' : ''}
             </h3>
             <p className="text-yellow-700 max-w-md mx-auto">
-              Fleiss's kappa requires exactly 3 annotation files. Please upload {3 - annotationFiles.length} more file{3 - annotationFiles.length > 1 ? 's' : ''} to calculate inter-rater agreement.
+              Pairwise kappa requires at least 2 annotation files. Please upload {2 - annotationFiles.length} more file{2 - annotationFiles.length > 1 ? 's' : ''} to calculate inter-rater agreement.
             </p>
           </div>
         )}
@@ -876,7 +826,7 @@ const KappaAgreement = () => {
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Annotation Files Uploaded</h3>
             <p className="text-gray-500 max-w-md mx-auto">
-              Upload exactly 3 annotation JSON files to calculate Fleiss's kappa agreement between raters and visualize timeline comparisons.
+              Upload 2 or more annotation JSON files to calculate pairwise kappa agreement between raters and visualize timeline comparisons.
             </p>
           </div>
         )}
@@ -885,11 +835,11 @@ const KappaAgreement = () => {
         <div className="mt-8 bg-blue-50 p-4 rounded-md">
           <h4 className="text-base font-medium text-blue-800 mb-2">How to Use This Tool</h4>
           <ul className="list-disc list-inside text-sm text-blue-700 space-y-1">
-            <li>Upload <strong>exactly 3</strong> annotation files (JSON) containing gaze annotations from different raters</li>
+            <li>Upload <strong>2 or more</strong> annotation files (JSON) containing gaze annotations from different raters</li>
             <li>Files should be from the same video for valid comparison</li>
             <li><strong>All files must use the same frame interval setting</strong> (e.g., all annotated every 10 frames)</li>
-            <li>The tool will calculate Fleiss's kappa for overall agreement between all 3 raters</li>
-            <li>Pairwise Cohen's kappa shows agreement between each pair of raters</li>
+            <li>The tool will calculate average pairwise kappa for overall agreement between all raters</li>
+            <li>Individual pairwise Cohen's kappa shows agreement between each pair of raters</li>
             <li>Kappa values range from -1 to 1, with 1 being perfect agreement</li>
             <li>Visualize timelines for each file to see differences</li>
             <li>Use this to evaluate inter-rater reliability in annotation studies</li>

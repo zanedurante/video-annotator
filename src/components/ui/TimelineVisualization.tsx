@@ -72,7 +72,7 @@ const TimelineVisualization = ({
       } else {
         // Process doctor gaze ranges (patient looking at doctor)
         if (leftPersonGaze) {
-          ctx.fillStyle = '#ef4444'; // Blue - Same as doctor looking at screen
+          ctx.fillStyle = '#1bd018'; // Green - Same as doctor looking at screen
           leftPersonGaze.forEach(range => {
             const startX = (range.startFrame / totalFrames) * width;
             const endX = (range.endFrame / totalFrames) * width;

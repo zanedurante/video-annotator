@@ -9,11 +9,11 @@ const VideoAnnotator = () => {
   const [totalFrames, setTotalFrames] = useState(0);
   const [frameInterval, setFrameInterval] = useState(10);
   const [annotationPhase, setAnnotationPhase] = useState("doctor"); // 'doctor' or 'patient'
-  const [continuousAnnotationInterval, setContinuousAnnotationInterval] =
-    useState(null);
   const [video, setVideo] = useState(null);
   const [videoFileName, setVideoFileName] = useState("");
   const [modelData, setModelData] = useState(null);
+  const [annotatorName, setAnnotatorName] = useState("");
+  const [annotatorNameVerify, setAnnotatorNameVerify] = useState("");
   const [annotations, setAnnotations] = useState({
     doctor: {}, // Format: { frameNumber: annotationValue }
     patient: {},
@@ -95,41 +95,6 @@ const VideoAnnotator = () => {
     [annotationPhase, currentFrame]
   );
 
-  // Start continuous annotation with s key
-  const startContinuousAnnotation = useCallback(() => {
-    if (!lastAnnotationRef.current) return;
-
-    const advanceFrameAndAnnotate = () => {
-      // Add annotation to current frame if not already annotated
-      if (!annotations[annotationPhase][currentFrame]) {
-        addAnnotation(lastAnnotationRef.current);
-      }
-      navigateFrames(frameInterval);
-    };
-
-    // Start interval for continuous advancing and annotation
-    const interval = setInterval(advanceFrameAndAnnotate, 50); // Run every 50ms for smooth advancement
-    setContinuousAnnotationInterval(interval);
-
-    // Immediately start advancing
-    advanceFrameAndAnnotate();
-  }, [
-    addAnnotation,
-    navigateFrames,
-    frameInterval,
-    annotations,
-    annotationPhase,
-    currentFrame,
-  ]);
-
-  // Stop continuous annotation
-  const stopContinuousAnnotation = useCallback(() => {
-    if (continuousAnnotationInterval) {
-      clearInterval(continuousAnnotationInterval);
-      setContinuousAnnotationInterval(null);
-    }
-  }, [continuousAnnotationInterval]);
-
   // Handle keyboard controls
   const handleKeyDown = useCallback(
     (event) => {
@@ -139,15 +104,12 @@ const VideoAnnotator = () => {
         navigateFrames(-frameInterval);
       } else if (event.code === "ArrowRight") {
         navigateFrames(frameInterval);
-      } else if (event.code === "KeyS") {
-        event.preventDefault();
-        startContinuousAnnotation();
       }
 
       // Doctor phase controls
       if (
         annotationPhase === "doctor" &&
-        ["Digit1", "Digit2", "Digit3"].includes(event.code)
+        ["Digit0", "Digit1", "Digit2", "Digit3"].includes(event.code)
       ) {
         const value = parseInt(event.code.replace("Digit", ""));
         addAnnotation(value);
@@ -156,7 +118,7 @@ const VideoAnnotator = () => {
       // Patient phase controls
       else if (
         annotationPhase === "patient" &&
-        ["Digit4", "Digit5", "Digit6"].includes(event.code)
+        ["Digit0", "Digit4", "Digit5", "Digit6"].includes(event.code)
       ) {
         const value = parseInt(event.code.replace("Digit", ""));
         addAnnotation(value);
@@ -168,30 +130,16 @@ const VideoAnnotator = () => {
       navigateFrames,
       annotationPhase,
       addAnnotation,
-      startContinuousAnnotation,
     ]
-  );
-
-  // Handle key up to stop continuous annotation
-  const handleKeyUp = useCallback(
-    (event) => {
-      if (event.code === "KeyS") {
-        stopContinuousAnnotation();
-      }
-    },
-    [stopContinuousAnnotation]
   );
 
   // Set up keyboard listeners
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("keyup", handleKeyUp);
-      stopContinuousAnnotation();
     };
-  }, [handleKeyDown, handleKeyUp, stopContinuousAnnotation]);
+  }, [handleKeyDown]);
 
   // Update video frame when currentFrame changes
   useEffect(() => {
@@ -214,11 +162,14 @@ const VideoAnnotator = () => {
     const doctorPatientGazeRanges = [];
     const doctorScreenGazeRanges = [];
     const doctorElsewhereGazeRanges = [];
+    // NOTE: Frames marked as "0" (no interaction) are intentionally NOT converted to ranges
+    // They exist in the annotations object but don't appear in the JSON export
     
     // Process patient gaze annotations
     const patientDoctorGazeRanges = [];
     const patientScreenGazeRanges = []; // New array for patient looking at screen
     const patientElsewhereGazeRanges = [];
+    // NOTE: Frames marked as "0" (no interaction) are intentionally NOT converted to ranges
     
     // Temporary arrays to store continuous ranges of frames
     let currentPatientRange = null;
@@ -236,6 +187,24 @@ const VideoAnnotator = () => {
     // Process each doctor frame
     doctorFrames.forEach((frame) => {
       const value = annotations.doctor[frame];
+      
+      // Skip frames marked as "no interaction" (value 0) - don't convert to ranges
+      if (value === 0) {
+        // End all ranges if active but don't add to any range
+        if (currentPatientRange) {
+          doctorPatientGazeRanges.push(currentPatientRange);
+          currentPatientRange = null;
+        }
+        if (currentScreenRange) {
+          doctorScreenGazeRanges.push(currentScreenRange);
+          currentScreenRange = null;
+        }
+        if (currentDoctorElsewhereRange) {
+          doctorElsewhereGazeRanges.push(currentDoctorElsewhereRange);
+          currentDoctorElsewhereRange = null;
+        }
+        return; // Skip processing this frame for ranges
+      }
       
       // Process doctor looking at patient (value 1)
       if (value === 1) {
@@ -321,6 +290,24 @@ const VideoAnnotator = () => {
     // Process each patient frame
     patientFrames.forEach((frame) => {
       const value = annotations.patient[frame];
+      
+      // Skip frames marked as "no interaction" (value 0) - don't convert to ranges
+      if (value === 0) {
+        // End all ranges if active but don't add to any range
+        if (currentPatientDoctorRange) {
+          patientDoctorGazeRanges.push(currentPatientDoctorRange);
+          currentPatientDoctorRange = null;
+        }
+        if (currentPatientScreenRange) {
+          patientScreenGazeRanges.push(currentPatientScreenRange);
+          currentPatientScreenRange = null;
+        }
+        if (currentPatientElsewhereRange) {
+          patientElsewhereGazeRanges.push(currentPatientElsewhereRange);
+          currentPatientElsewhereRange = null;
+        }
+        return; // Skip processing this frame for ranges
+      }
       
       // Process patient looking at doctor (value 4)
       if (value === 4) {
@@ -424,9 +411,32 @@ const VideoAnnotator = () => {
       return;
     }
     
+    // Check if annotator name is provided and verified
+    if (!annotatorName.trim()) {
+      alert("Please enter your annotator name before saving.");
+      return;
+    }
+    
+    if (annotatorName.toLowerCase().trim() !== annotatorNameVerify.toLowerCase().trim()) {
+      alert("Annotator names do not match. Please verify your name correctly.");
+      return;
+    }
+    
     try {
       // Convert annotations to the expected model format
       const annotationsData = convertAnnotationsToModelFormat();
+      
+      // Add annotator information to the data (only for human annotations)
+      annotationsData[0].annotatorName = annotatorName.trim();
+      annotationsData[0].videoTitle = videoFileName;
+      
+      // Add video info if available
+      if (totalFrames) {
+        annotationsData[1].videoInfo = {
+          totalFrames: totalFrames,
+          frameInterval: frameInterval
+        };
+      }
       
       // Create a Blob with the data
       const blob = new Blob([JSON.stringify(annotationsData, null, 2)], { type: "application/json" });
@@ -434,7 +444,7 @@ const VideoAnnotator = () => {
       // Create a download link and trigger it
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
-      const fileName = videoFileName ? `${videoFileName.split('.')[0]}_annotations.json` : "annotations.json";
+      const fileName = videoFileName ? `${videoFileName.split('.')[0]}_${annotatorName.trim().replace(/\s+/g, '')}_annotations.json` : `${annotatorName.trim().replace(/\s+/g, '')}_annotations.json`;
       
       link.href = url;
       link.download = fileName;
@@ -542,6 +552,10 @@ const VideoAnnotator = () => {
             }
           });
         }
+        
+        // Note: Frames marked as "0" (no interaction) were stored in the annotations object
+        // but not converted to ranges in the JSON, so they won't be loaded back
+        // This is intentional - "0" annotations are only for live annotation, not for storage
       }
       
       // Set the annotations state
@@ -691,6 +705,46 @@ const VideoAnnotator = () => {
           
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
+              Annotator Name
+            </label>
+            <input
+              type="text"
+              value={annotatorName}
+              onChange={(e) => setAnnotatorName(e.target.value)}
+              placeholder="Enter your name"
+              className="block w-full rounded-md border-gray-300 shadow-sm px-3 py-2 text-sm
+                       focus:border-blue-500 focus:ring-blue-500"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
+              Verify Name
+            </label>
+            <input
+              type="text"
+              value={annotatorNameVerify}
+              onChange={(e) => setAnnotatorNameVerify(e.target.value)}
+              placeholder="Re-enter your name"
+              className={`block w-full rounded-md shadow-sm px-3 py-2 text-sm
+                       ${annotatorName && annotatorNameVerify && 
+                         annotatorName.toLowerCase().trim() === annotatorNameVerify.toLowerCase().trim()
+                         ? 'border-green-300 focus:border-green-500 focus:ring-green-500' 
+                         : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500'}`}
+            />
+            {annotatorName && annotatorNameVerify && (
+              <div className={`text-xs ${
+                annotatorName.toLowerCase().trim() === annotatorNameVerify.toLowerCase().trim()
+                  ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {annotatorName.toLowerCase().trim() === annotatorNameVerify.toLowerCase().trim()
+                  ? '✓ Names match' : '✗ Names do not match'}
+              </div>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700">
               Upload AI Model Predictions
             </label>
             <div className="flex items-center">
@@ -751,8 +805,11 @@ const VideoAnnotator = () => {
             </label>
             <button
               onClick={saveAnnotations}
-              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors flex items-center"
-              disabled={!video || (Object.keys(annotations.doctor).length === 0 && Object.keys(annotations.patient).length === 0)}
+              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors flex items-center disabled:bg-gray-400 disabled:cursor-not-allowed"
+              disabled={!video || 
+                       (Object.keys(annotations.doctor).length === 0 && Object.keys(annotations.patient).length === 0) ||
+                       !annotatorName.trim() ||
+                       annotatorName.toLowerCase().trim() !== annotatorNameVerify.toLowerCase().trim()}
             >
               <Save className="mr-2 h-4 w-4" />
               Save Annotations
@@ -768,13 +825,15 @@ const VideoAnnotator = () => {
                 setAnnotations({ doctor: {}, patient: {} });
                 setAnnotationPhase("doctor");
                 setCurrentFrame(0);
+                setAnnotatorName("");
+                setAnnotatorNameVerify("");
                 if (videoRef.current) {
                   videoRef.current.currentTime = 0;
                 }
               }}
               className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
             >
-              Reset Annotations
+              Reset All
             </button>
           </div>
         </div>
@@ -836,6 +895,12 @@ const VideoAnnotator = () => {
               <ul className="space-y-2 text-sm">
                 <li className="flex items-center">
                   <span className="inline-block w-24 px-2 py-1 bg-gray-200 rounded mr-2 text-center">
+                    0
+                  </span>
+                  <span>No Interaction</span>
+                </li>
+                <li className="flex items-center">
+                  <span className="inline-block w-24 px-2 py-1 bg-gray-200 rounded mr-2 text-center">
                     1
                   </span>
                   <span>Looking at Patient</span>
@@ -860,6 +925,12 @@ const VideoAnnotator = () => {
                 Patient Annotation (Second Phase)
               </h4>
               <ul className="space-y-2 text-sm">
+                <li className="flex items-center">
+                  <span className="inline-block w-24 px-2 py-1 bg-gray-200 rounded mr-2 text-center">
+                    0
+                  </span>
+                  <span>No Interaction</span>
+                </li>
                 <li className="flex items-center">
                   <span className="inline-block w-24 px-2 py-1 bg-gray-200 rounded mr-2 text-center">
                     4
@@ -914,7 +985,7 @@ const VideoAnnotator = () => {
                   modelData={modelData}
                   totalFrames={totalFrames}
                   annotationPhase={annotationPhase}
-                  currentFrame={currentFrame} // Add this prop
+                  currentFrame={currentFrame}
                 />
               </div>
             )}
