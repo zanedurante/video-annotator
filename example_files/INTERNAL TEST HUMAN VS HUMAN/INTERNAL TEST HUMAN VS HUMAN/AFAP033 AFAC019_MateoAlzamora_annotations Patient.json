@@ -1,0 +1,2321 @@
+[
+  {
+    "videoFile": "AFAP033 AFAC019.mp4",
+    "annotatorName": "Mateo Alzamora",
+    "videoTitle": "AFAP033 AFAC019.mp4"
+  },
+  {
+    "manualAnnotations": {
+      "rightPersonGaze": [
+        {
+          "startFrame": 0,
+          "endFrame": 0
+        },
+        {
+          "startFrame": 20,
+          "endFrame": 20
+        },
+        {
+          "startFrame": 100,
+          "endFrame": 100
+        },
+        {
+          "startFrame": 120,
+          "endFrame": 120
+        },
+        {
+          "startFrame": 140,
+          "endFrame": 140
+        },
+        {
+          "startFrame": 160,
+          "endFrame": 160
+        },
+        {
+          "startFrame": 180,
+          "endFrame": 180
+        },
+        {
+          "startFrame": 200,
+          "endFrame": 200
+        },
+        {
+          "startFrame": 420,
+          "endFrame": 420
+        },
+        {
+          "startFrame": 540,
+          "endFrame": 540
+        },
+        {
+          "startFrame": 560,
+          "endFrame": 560
+        },
+        {
+          "startFrame": 580,
+          "endFrame": 580
+        },
+        {
+          "startFrame": 600,
+          "endFrame": 600
+        },
+        {
+          "startFrame": 620,
+          "endFrame": 620
+        },
+        {
+          "startFrame": 640,
+          "endFrame": 640
+        },
+        {
+          "startFrame": 680,
+          "endFrame": 680
+        },
+        {
+          "startFrame": 700,
+          "endFrame": 700
+        },
+        {
+          "startFrame": 720,
+          "endFrame": 720
+        },
+        {
+          "startFrame": 860,
+          "endFrame": 860
+        },
+        {
+          "startFrame": 880,
+          "endFrame": 880
+        },
+        {
+          "startFrame": 900,
+          "endFrame": 900
+        },
+        {
+          "startFrame": 920,
+          "endFrame": 920
+        },
+        {
+          "startFrame": 1000,
+          "endFrame": 1000
+        },
+        {
+          "startFrame": 1020,
+          "endFrame": 1020
+        },
+        {
+          "startFrame": 1040,
+          "endFrame": 1040
+        },
+        {
+          "startFrame": 1060,
+          "endFrame": 1060
+        },
+        {
+          "startFrame": 1080,
+          "endFrame": 1080
+        },
+        {
+          "startFrame": 1100,
+          "endFrame": 1100
+        },
+        {
+          "startFrame": 1220,
+          "endFrame": 1220
+        },
+        {
+          "startFrame": 1240,
+          "endFrame": 1240
+        },
+        {
+          "startFrame": 1260,
+          "endFrame": 1260
+        },
+        {
+          "startFrame": 1280,
+          "endFrame": 1280
+        },
+        {
+          "startFrame": 1300,
+          "endFrame": 1300
+        },
+        {
+          "startFrame": 1320,
+          "endFrame": 1320
+        },
+        {
+          "startFrame": 1340,
+          "endFrame": 1340
+        },
+        {
+          "startFrame": 1360,
+          "endFrame": 1360
+        },
+        {
+          "startFrame": 1380,
+          "endFrame": 1380
+        },
+        {
+          "startFrame": 1480,
+          "endFrame": 1480
+        },
+        {
+          "startFrame": 1500,
+          "endFrame": 1500
+        },
+        {
+          "startFrame": 1520,
+          "endFrame": 1520
+        },
+        {
+          "startFrame": 1540,
+          "endFrame": 1540
+        },
+        {
+          "startFrame": 1560,
+          "endFrame": 1560
+        },
+        {
+          "startFrame": 1620,
+          "endFrame": 1620
+        },
+        {
+          "startFrame": 1640,
+          "endFrame": 1640
+        },
+        {
+          "startFrame": 1660,
+          "endFrame": 1660
+        },
+        {
+          "startFrame": 1680,
+          "endFrame": 1680
+        },
+        {
+          "startFrame": 1700,
+          "endFrame": 1700
+        },
+        {
+          "startFrame": 1720,
+          "endFrame": 1720
+        },
+        {
+          "startFrame": 1740,
+          "endFrame": 1740
+        },
+        {
+          "startFrame": 1860,
+          "endFrame": 1860
+        },
+        {
+          "startFrame": 1880,
+          "endFrame": 1880
+        },
+        {
+          "startFrame": 2060,
+          "endFrame": 2060
+        },
+        {
+          "startFrame": 2080,
+          "endFrame": 2080
+        },
+        {
+          "startFrame": 2120,
+          "endFrame": 2120
+        },
+        {
+          "startFrame": 2140,
+          "endFrame": 2140
+        },
+        {
+          "startFrame": 2160,
+          "endFrame": 2160
+        },
+        {
+          "startFrame": 2180,
+          "endFrame": 2180
+        },
+        {
+          "startFrame": 2200,
+          "endFrame": 2200
+        },
+        {
+          "startFrame": 2220,
+          "endFrame": 2220
+        },
+        {
+          "startFrame": 2240,
+          "endFrame": 2240
+        },
+        {
+          "startFrame": 2260,
+          "endFrame": 2260
+        },
+        {
+          "startFrame": 2280,
+          "endFrame": 2280
+        },
+        {
+          "startFrame": 2300,
+          "endFrame": 2300
+        },
+        {
+          "startFrame": 2380,
+          "endFrame": 2380
+        },
+        {
+          "startFrame": 2400,
+          "endFrame": 2400
+        },
+        {
+          "startFrame": 2420,
+          "endFrame": 2420
+        },
+        {
+          "startFrame": 2480,
+          "endFrame": 2480
+        },
+        {
+          "startFrame": 2500,
+          "endFrame": 2500
+        },
+        {
+          "startFrame": 2520,
+          "endFrame": 2520
+        },
+        {
+          "startFrame": 2540,
+          "endFrame": 2540
+        },
+        {
+          "startFrame": 2560,
+          "endFrame": 2560
+        },
+        {
+          "startFrame": 2600,
+          "endFrame": 2600
+        },
+        {
+          "startFrame": 2620,
+          "endFrame": 2620
+        },
+        {
+          "startFrame": 2640,
+          "endFrame": 2640
+        },
+        {
+          "startFrame": 2660,
+          "endFrame": 2660
+        },
+        {
+          "startFrame": 2680,
+          "endFrame": 2680
+        },
+        {
+          "startFrame": 2700,
+          "endFrame": 2700
+        },
+        {
+          "startFrame": 2760,
+          "endFrame": 2760
+        },
+        {
+          "startFrame": 2840,
+          "endFrame": 2840
+        },
+        {
+          "startFrame": 2860,
+          "endFrame": 2860
+        },
+        {
+          "startFrame": 2880,
+          "endFrame": 2880
+        },
+        {
+          "startFrame": 2900,
+          "endFrame": 2900
+        },
+        {
+          "startFrame": 2920,
+          "endFrame": 2920
+        },
+        {
+          "startFrame": 2940,
+          "endFrame": 2940
+        },
+        {
+          "startFrame": 2960,
+          "endFrame": 2960
+        },
+        {
+          "startFrame": 2980,
+          "endFrame": 2980
+        },
+        {
+          "startFrame": 3000,
+          "endFrame": 3000
+        },
+        {
+          "startFrame": 3020,
+          "endFrame": 3020
+        },
+        {
+          "startFrame": 3040,
+          "endFrame": 3040
+        },
+        {
+          "startFrame": 3060,
+          "endFrame": 3060
+        },
+        {
+          "startFrame": 3080,
+          "endFrame": 3080
+        },
+        {
+          "startFrame": 3100,
+          "endFrame": 3100
+        },
+        {
+          "startFrame": 3120,
+          "endFrame": 3120
+        },
+        {
+          "startFrame": 3140,
+          "endFrame": 3140
+        },
+        {
+          "startFrame": 3180,
+          "endFrame": 3180
+        },
+        {
+          "startFrame": 3200,
+          "endFrame": 3200
+        },
+        {
+          "startFrame": 3220,
+          "endFrame": 3220
+        },
+        {
+          "startFrame": 3240,
+          "endFrame": 3240
+        },
+        {
+          "startFrame": 3260,
+          "endFrame": 3260
+        },
+        {
+          "startFrame": 3280,
+          "endFrame": 3280
+        },
+        {
+          "startFrame": 3300,
+          "endFrame": 3300
+        },
+        {
+          "startFrame": 3320,
+          "endFrame": 3320
+        },
+        {
+          "startFrame": 3340,
+          "endFrame": 3340
+        },
+        {
+          "startFrame": 3360,
+          "endFrame": 3360
+        },
+        {
+          "startFrame": 3540,
+          "endFrame": 3540
+        },
+        {
+          "startFrame": 3560,
+          "endFrame": 3560
+        },
+        {
+          "startFrame": 3580,
+          "endFrame": 3580
+        },
+        {
+          "startFrame": 3600,
+          "endFrame": 3600
+        },
+        {
+          "startFrame": 3620,
+          "endFrame": 3620
+        },
+        {
+          "startFrame": 3640,
+          "endFrame": 3640
+        },
+        {
+          "startFrame": 3660,
+          "endFrame": 3660
+        },
+        {
+          "startFrame": 3680,
+          "endFrame": 3680
+        },
+        {
+          "startFrame": 3700,
+          "endFrame": 3700
+        },
+        {
+          "startFrame": 3780,
+          "endFrame": 3780
+        },
+        {
+          "startFrame": 3800,
+          "endFrame": 3800
+        },
+        {
+          "startFrame": 3880,
+          "endFrame": 3880
+        },
+        {
+          "startFrame": 3920,
+          "endFrame": 3920
+        },
+        {
+          "startFrame": 4040,
+          "endFrame": 4040
+        },
+        {
+          "startFrame": 4060,
+          "endFrame": 4060
+        },
+        {
+          "startFrame": 4080,
+          "endFrame": 4080
+        },
+        {
+          "startFrame": 4100,
+          "endFrame": 4100
+        },
+        {
+          "startFrame": 4240,
+          "endFrame": 4240
+        },
+        {
+          "startFrame": 4260,
+          "endFrame": 4260
+        },
+        {
+          "startFrame": 4280,
+          "endFrame": 4280
+        },
+        {
+          "startFrame": 4300,
+          "endFrame": 4300
+        },
+        {
+          "startFrame": 4320,
+          "endFrame": 4320
+        },
+        {
+          "startFrame": 4360,
+          "endFrame": 4360
+        },
+        {
+          "startFrame": 4380,
+          "endFrame": 4380
+        },
+        {
+          "startFrame": 4440,
+          "endFrame": 4440
+        },
+        {
+          "startFrame": 4460,
+          "endFrame": 4460
+        },
+        {
+          "startFrame": 4480,
+          "endFrame": 4480
+        },
+        {
+          "startFrame": 4500,
+          "endFrame": 4500
+        },
+        {
+          "startFrame": 4640,
+          "endFrame": 4640
+        },
+        {
+          "startFrame": 4660,
+          "endFrame": 4660
+        },
+        {
+          "startFrame": 4680,
+          "endFrame": 4680
+        },
+        {
+          "startFrame": 4820,
+          "endFrame": 4820
+        },
+        {
+          "startFrame": 4840,
+          "endFrame": 4840
+        },
+        {
+          "startFrame": 4860,
+          "endFrame": 4860
+        },
+        {
+          "startFrame": 4880,
+          "endFrame": 4880
+        },
+        {
+          "startFrame": 4900,
+          "endFrame": 4900
+        },
+        {
+          "startFrame": 4920,
+          "endFrame": 4920
+        },
+        {
+          "startFrame": 4940,
+          "endFrame": 4940
+        },
+        {
+          "startFrame": 4960,
+          "endFrame": 4960
+        },
+        {
+          "startFrame": 4980,
+          "endFrame": 4980
+        },
+        {
+          "startFrame": 5000,
+          "endFrame": 5000
+        },
+        {
+          "startFrame": 5020,
+          "endFrame": 5020
+        },
+        {
+          "startFrame": 5040,
+          "endFrame": 5040
+        },
+        {
+          "startFrame": 5060,
+          "endFrame": 5060
+        },
+        {
+          "startFrame": 5080,
+          "endFrame": 5080
+        },
+        {
+          "startFrame": 5100,
+          "endFrame": 5100
+        },
+        {
+          "startFrame": 5120,
+          "endFrame": 5120
+        },
+        {
+          "startFrame": 5140,
+          "endFrame": 5140
+        },
+        {
+          "startFrame": 5160,
+          "endFrame": 5160
+        },
+        {
+          "startFrame": 5180,
+          "endFrame": 5180
+        },
+        {
+          "startFrame": 5300,
+          "endFrame": 5300
+        },
+        {
+          "startFrame": 5320,
+          "endFrame": 5320
+        },
+        {
+          "startFrame": 5520,
+          "endFrame": 5520
+        },
+        {
+          "startFrame": 5540,
+          "endFrame": 5540
+        },
+        {
+          "startFrame": 5560,
+          "endFrame": 5560
+        },
+        {
+          "startFrame": 5580,
+          "endFrame": 5580
+        },
+        {
+          "startFrame": 5600,
+          "endFrame": 5600
+        },
+        {
+          "startFrame": 5620,
+          "endFrame": 5620
+        }
+      ],
+      "rightPersonScreen": [],
+      "rightPersonElsewhere": [
+        {
+          "startFrame": 40,
+          "endFrame": 40
+        },
+        {
+          "startFrame": 60,
+          "endFrame": 60
+        },
+        {
+          "startFrame": 80,
+          "endFrame": 80
+        },
+        {
+          "startFrame": 220,
+          "endFrame": 220
+        },
+        {
+          "startFrame": 240,
+          "endFrame": 240
+        },
+        {
+          "startFrame": 260,
+          "endFrame": 260
+        },
+        {
+          "startFrame": 280,
+          "endFrame": 280
+        },
+        {
+          "startFrame": 300,
+          "endFrame": 300
+        },
+        {
+          "startFrame": 320,
+          "endFrame": 320
+        },
+        {
+          "startFrame": 340,
+          "endFrame": 340
+        },
+        {
+          "startFrame": 360,
+          "endFrame": 360
+        },
+        {
+          "startFrame": 380,
+          "endFrame": 380
+        },
+        {
+          "startFrame": 400,
+          "endFrame": 400
+        },
+        {
+          "startFrame": 440,
+          "endFrame": 440
+        },
+        {
+          "startFrame": 460,
+          "endFrame": 460
+        },
+        {
+          "startFrame": 480,
+          "endFrame": 480
+        },
+        {
+          "startFrame": 500,
+          "endFrame": 500
+        },
+        {
+          "startFrame": 520,
+          "endFrame": 520
+        },
+        {
+          "startFrame": 660,
+          "endFrame": 660
+        },
+        {
+          "startFrame": 740,
+          "endFrame": 740
+        },
+        {
+          "startFrame": 760,
+          "endFrame": 760
+        },
+        {
+          "startFrame": 780,
+          "endFrame": 780
+        },
+        {
+          "startFrame": 800,
+          "endFrame": 800
+        },
+        {
+          "startFrame": 820,
+          "endFrame": 820
+        },
+        {
+          "startFrame": 840,
+          "endFrame": 840
+        },
+        {
+          "startFrame": 940,
+          "endFrame": 940
+        },
+        {
+          "startFrame": 960,
+          "endFrame": 960
+        },
+        {
+          "startFrame": 980,
+          "endFrame": 980
+        },
+        {
+          "startFrame": 1120,
+          "endFrame": 1120
+        },
+        {
+          "startFrame": 1140,
+          "endFrame": 1140
+        },
+        {
+          "startFrame": 1160,
+          "endFrame": 1160
+        },
+        {
+          "startFrame": 1180,
+          "endFrame": 1180
+        },
+        {
+          "startFrame": 1200,
+          "endFrame": 1200
+        },
+        {
+          "startFrame": 1400,
+          "endFrame": 1400
+        },
+        {
+          "startFrame": 1420,
+          "endFrame": 1420
+        },
+        {
+          "startFrame": 1440,
+          "endFrame": 1440
+        },
+        {
+          "startFrame": 1460,
+          "endFrame": 1460
+        },
+        {
+          "startFrame": 1580,
+          "endFrame": 1580
+        },
+        {
+          "startFrame": 1600,
+          "endFrame": 1600
+        },
+        {
+          "startFrame": 1760,
+          "endFrame": 1760
+        },
+        {
+          "startFrame": 1780,
+          "endFrame": 1780
+        },
+        {
+          "startFrame": 1800,
+          "endFrame": 1800
+        },
+        {
+          "startFrame": 1820,
+          "endFrame": 1820
+        },
+        {
+          "startFrame": 1840,
+          "endFrame": 1840
+        },
+        {
+          "startFrame": 1900,
+          "endFrame": 1900
+        },
+        {
+          "startFrame": 1920,
+          "endFrame": 1920
+        },
+        {
+          "startFrame": 1940,
+          "endFrame": 1940
+        },
+        {
+          "startFrame": 1960,
+          "endFrame": 1960
+        },
+        {
+          "startFrame": 1980,
+          "endFrame": 1980
+        },
+        {
+          "startFrame": 2000,
+          "endFrame": 2000
+        },
+        {
+          "startFrame": 2020,
+          "endFrame": 2020
+        },
+        {
+          "startFrame": 2040,
+          "endFrame": 2040
+        },
+        {
+          "startFrame": 2100,
+          "endFrame": 2100
+        },
+        {
+          "startFrame": 2320,
+          "endFrame": 2320
+        },
+        {
+          "startFrame": 2340,
+          "endFrame": 2340
+        },
+        {
+          "startFrame": 2360,
+          "endFrame": 2360
+        },
+        {
+          "startFrame": 2440,
+          "endFrame": 2440
+        },
+        {
+          "startFrame": 2460,
+          "endFrame": 2460
+        },
+        {
+          "startFrame": 2580,
+          "endFrame": 2580
+        },
+        {
+          "startFrame": 2720,
+          "endFrame": 2720
+        },
+        {
+          "startFrame": 2740,
+          "endFrame": 2740
+        },
+        {
+          "startFrame": 2780,
+          "endFrame": 2780
+        },
+        {
+          "startFrame": 2800,
+          "endFrame": 2800
+        },
+        {
+          "startFrame": 2820,
+          "endFrame": 2820
+        },
+        {
+          "startFrame": 3160,
+          "endFrame": 3160
+        },
+        {
+          "startFrame": 3380,
+          "endFrame": 3380
+        },
+        {
+          "startFrame": 3400,
+          "endFrame": 3400
+        },
+        {
+          "startFrame": 3420,
+          "endFrame": 3420
+        },
+        {
+          "startFrame": 3440,
+          "endFrame": 3440
+        },
+        {
+          "startFrame": 3460,
+          "endFrame": 3460
+        },
+        {
+          "startFrame": 3480,
+          "endFrame": 3480
+        },
+        {
+          "startFrame": 3500,
+          "endFrame": 3500
+        },
+        {
+          "startFrame": 3520,
+          "endFrame": 3520
+        },
+        {
+          "startFrame": 3720,
+          "endFrame": 3720
+        },
+        {
+          "startFrame": 3740,
+          "endFrame": 3740
+        },
+        {
+          "startFrame": 3760,
+          "endFrame": 3760
+        },
+        {
+          "startFrame": 3820,
+          "endFrame": 3820
+        },
+        {
+          "startFrame": 3840,
+          "endFrame": 3840
+        },
+        {
+          "startFrame": 3860,
+          "endFrame": 3860
+        },
+        {
+          "startFrame": 3900,
+          "endFrame": 3900
+        },
+        {
+          "startFrame": 3940,
+          "endFrame": 3940
+        },
+        {
+          "startFrame": 3960,
+          "endFrame": 3960
+        },
+        {
+          "startFrame": 3980,
+          "endFrame": 3980
+        },
+        {
+          "startFrame": 4000,
+          "endFrame": 4000
+        },
+        {
+          "startFrame": 4020,
+          "endFrame": 4020
+        },
+        {
+          "startFrame": 4120,
+          "endFrame": 4120
+        },
+        {
+          "startFrame": 4140,
+          "endFrame": 4140
+        },
+        {
+          "startFrame": 4160,
+          "endFrame": 4160
+        },
+        {
+          "startFrame": 4180,
+          "endFrame": 4180
+        },
+        {
+          "startFrame": 4200,
+          "endFrame": 4200
+        },
+        {
+          "startFrame": 4220,
+          "endFrame": 4220
+        },
+        {
+          "startFrame": 4340,
+          "endFrame": 4340
+        },
+        {
+          "startFrame": 4400,
+          "endFrame": 4400
+        },
+        {
+          "startFrame": 4420,
+          "endFrame": 4420
+        },
+        {
+          "startFrame": 4520,
+          "endFrame": 4520
+        },
+        {
+          "startFrame": 4540,
+          "endFrame": 4540
+        },
+        {
+          "startFrame": 4560,
+          "endFrame": 4560
+        },
+        {
+          "startFrame": 4580,
+          "endFrame": 4580
+        },
+        {
+          "startFrame": 4600,
+          "endFrame": 4600
+        },
+        {
+          "startFrame": 4620,
+          "endFrame": 4620
+        },
+        {
+          "startFrame": 4700,
+          "endFrame": 4700
+        },
+        {
+          "startFrame": 4720,
+          "endFrame": 4720
+        },
+        {
+          "startFrame": 4740,
+          "endFrame": 4740
+        },
+        {
+          "startFrame": 4760,
+          "endFrame": 4760
+        },
+        {
+          "startFrame": 4780,
+          "endFrame": 4780
+        },
+        {
+          "startFrame": 4800,
+          "endFrame": 4800
+        },
+        {
+          "startFrame": 5200,
+          "endFrame": 5200
+        },
+        {
+          "startFrame": 5220,
+          "endFrame": 5220
+        },
+        {
+          "startFrame": 5240,
+          "endFrame": 5240
+        },
+        {
+          "startFrame": 5260,
+          "endFrame": 5260
+        },
+        {
+          "startFrame": 5280,
+          "endFrame": 5280
+        },
+        {
+          "startFrame": 5340,
+          "endFrame": 5340
+        },
+        {
+          "startFrame": 5360,
+          "endFrame": 5360
+        },
+        {
+          "startFrame": 5380,
+          "endFrame": 5380
+        },
+        {
+          "startFrame": 5400,
+          "endFrame": 5400
+        },
+        {
+          "startFrame": 5420,
+          "endFrame": 5420
+        },
+        {
+          "startFrame": 5440,
+          "endFrame": 5440
+        },
+        {
+          "startFrame": 5460,
+          "endFrame": 5460
+        },
+        {
+          "startFrame": 5480,
+          "endFrame": 5480
+        },
+        {
+          "startFrame": 5500,
+          "endFrame": 5500
+        },
+        {
+          "startFrame": 5640,
+          "endFrame": 5640
+        },
+        {
+          "startFrame": 5660,
+          "endFrame": 5660
+        },
+        {
+          "startFrame": 5680,
+          "endFrame": 5680
+        },
+        {
+          "startFrame": 5700,
+          "endFrame": 5700
+        },
+        {
+          "startFrame": 5711,
+          "endFrame": 5711
+        }
+      ],
+      "leftPersonGaze": [
+        {
+          "startFrame": 0,
+          "endFrame": 0
+        },
+        {
+          "startFrame": 20,
+          "endFrame": 20
+        },
+        {
+          "startFrame": 40,
+          "endFrame": 40
+        },
+        {
+          "startFrame": 60,
+          "endFrame": 60
+        },
+        {
+          "startFrame": 80,
+          "endFrame": 80
+        },
+        {
+          "startFrame": 100,
+          "endFrame": 100
+        },
+        {
+          "startFrame": 120,
+          "endFrame": 120
+        },
+        {
+          "startFrame": 140,
+          "endFrame": 140
+        },
+        {
+          "startFrame": 160,
+          "endFrame": 160
+        },
+        {
+          "startFrame": 180,
+          "endFrame": 180
+        },
+        {
+          "startFrame": 200,
+          "endFrame": 200
+        },
+        {
+          "startFrame": 260,
+          "endFrame": 260
+        },
+        {
+          "startFrame": 280,
+          "endFrame": 280
+        },
+        {
+          "startFrame": 300,
+          "endFrame": 300
+        },
+        {
+          "startFrame": 320,
+          "endFrame": 320
+        },
+        {
+          "startFrame": 340,
+          "endFrame": 340
+        },
+        {
+          "startFrame": 360,
+          "endFrame": 360
+        },
+        {
+          "startFrame": 380,
+          "endFrame": 380
+        },
+        {
+          "startFrame": 400,
+          "endFrame": 400
+        },
+        {
+          "startFrame": 420,
+          "endFrame": 420
+        },
+        {
+          "startFrame": 440,
+          "endFrame": 440
+        },
+        {
+          "startFrame": 460,
+          "endFrame": 460
+        },
+        {
+          "startFrame": 480,
+          "endFrame": 480
+        },
+        {
+          "startFrame": 500,
+          "endFrame": 500
+        },
+        {
+          "startFrame": 520,
+          "endFrame": 520
+        },
+        {
+          "startFrame": 540,
+          "endFrame": 540
+        },
+        {
+          "startFrame": 560,
+          "endFrame": 560
+        },
+        {
+          "startFrame": 580,
+          "endFrame": 580
+        },
+        {
+          "startFrame": 600,
+          "endFrame": 600
+        },
+        {
+          "startFrame": 620,
+          "endFrame": 620
+        },
+        {
+          "startFrame": 640,
+          "endFrame": 640
+        },
+        {
+          "startFrame": 660,
+          "endFrame": 660
+        },
+        {
+          "startFrame": 680,
+          "endFrame": 680
+        },
+        {
+          "startFrame": 700,
+          "endFrame": 700
+        },
+        {
+          "startFrame": 720,
+          "endFrame": 720
+        },
+        {
+          "startFrame": 740,
+          "endFrame": 740
+        },
+        {
+          "startFrame": 760,
+          "endFrame": 760
+        },
+        {
+          "startFrame": 780,
+          "endFrame": 780
+        },
+        {
+          "startFrame": 800,
+          "endFrame": 800
+        },
+        {
+          "startFrame": 820,
+          "endFrame": 820
+        },
+        {
+          "startFrame": 840,
+          "endFrame": 840
+        },
+        {
+          "startFrame": 860,
+          "endFrame": 860
+        },
+        {
+          "startFrame": 880,
+          "endFrame": 880
+        },
+        {
+          "startFrame": 900,
+          "endFrame": 900
+        },
+        {
+          "startFrame": 920,
+          "endFrame": 920
+        },
+        {
+          "startFrame": 980,
+          "endFrame": 980
+        },
+        {
+          "startFrame": 1000,
+          "endFrame": 1000
+        },
+        {
+          "startFrame": 1020,
+          "endFrame": 1020
+        },
+        {
+          "startFrame": 1040,
+          "endFrame": 1040
+        },
+        {
+          "startFrame": 1060,
+          "endFrame": 1060
+        },
+        {
+          "startFrame": 1080,
+          "endFrame": 1080
+        },
+        {
+          "startFrame": 1100,
+          "endFrame": 1100
+        },
+        {
+          "startFrame": 1120,
+          "endFrame": 1120
+        },
+        {
+          "startFrame": 1140,
+          "endFrame": 1140
+        },
+        {
+          "startFrame": 1160,
+          "endFrame": 1160
+        },
+        {
+          "startFrame": 1180,
+          "endFrame": 1180
+        },
+        {
+          "startFrame": 1200,
+          "endFrame": 1200
+        },
+        {
+          "startFrame": 1220,
+          "endFrame": 1220
+        },
+        {
+          "startFrame": 1240,
+          "endFrame": 1240
+        },
+        {
+          "startFrame": 1260,
+          "endFrame": 1260
+        },
+        {
+          "startFrame": 1280,
+          "endFrame": 1280
+        },
+        {
+          "startFrame": 1300,
+          "endFrame": 1300
+        },
+        {
+          "startFrame": 1320,
+          "endFrame": 1320
+        },
+        {
+          "startFrame": 1340,
+          "endFrame": 1340
+        },
+        {
+          "startFrame": 1360,
+          "endFrame": 1360
+        },
+        {
+          "startFrame": 1380,
+          "endFrame": 1380
+        },
+        {
+          "startFrame": 1400,
+          "endFrame": 1400
+        },
+        {
+          "startFrame": 1420,
+          "endFrame": 1420
+        },
+        {
+          "startFrame": 1440,
+          "endFrame": 1440
+        },
+        {
+          "startFrame": 1460,
+          "endFrame": 1460
+        },
+        {
+          "startFrame": 1480,
+          "endFrame": 1480
+        },
+        {
+          "startFrame": 1500,
+          "endFrame": 1500
+        },
+        {
+          "startFrame": 1520,
+          "endFrame": 1520
+        },
+        {
+          "startFrame": 1540,
+          "endFrame": 1540
+        },
+        {
+          "startFrame": 1560,
+          "endFrame": 1560
+        },
+        {
+          "startFrame": 1580,
+          "endFrame": 1580
+        },
+        {
+          "startFrame": 1600,
+          "endFrame": 1600
+        },
+        {
+          "startFrame": 1620,
+          "endFrame": 1620
+        },
+        {
+          "startFrame": 1640,
+          "endFrame": 1640
+        },
+        {
+          "startFrame": 1660,
+          "endFrame": 1660
+        },
+        {
+          "startFrame": 1680,
+          "endFrame": 1680
+        },
+        {
+          "startFrame": 1700,
+          "endFrame": 1700
+        },
+        {
+          "startFrame": 1720,
+          "endFrame": 1720
+        },
+        {
+          "startFrame": 1740,
+          "endFrame": 1740
+        },
+        {
+          "startFrame": 1760,
+          "endFrame": 1760
+        },
+        {
+          "startFrame": 1780,
+          "endFrame": 1780
+        },
+        {
+          "startFrame": 1800,
+          "endFrame": 1800
+        },
+        {
+          "startFrame": 1820,
+          "endFrame": 1820
+        },
+        {
+          "startFrame": 1840,
+          "endFrame": 1840
+        },
+        {
+          "startFrame": 1860,
+          "endFrame": 1860
+        },
+        {
+          "startFrame": 1880,
+          "endFrame": 1880
+        },
+        {
+          "startFrame": 1900,
+          "endFrame": 1900
+        },
+        {
+          "startFrame": 1920,
+          "endFrame": 1920
+        },
+        {
+          "startFrame": 1940,
+          "endFrame": 1940
+        },
+        {
+          "startFrame": 1960,
+          "endFrame": 1960
+        },
+        {
+          "startFrame": 1980,
+          "endFrame": 1980
+        },
+        {
+          "startFrame": 2000,
+          "endFrame": 2000
+        },
+        {
+          "startFrame": 2020,
+          "endFrame": 2020
+        },
+        {
+          "startFrame": 2040,
+          "endFrame": 2040
+        },
+        {
+          "startFrame": 2060,
+          "endFrame": 2060
+        },
+        {
+          "startFrame": 2080,
+          "endFrame": 2080
+        },
+        {
+          "startFrame": 2100,
+          "endFrame": 2100
+        },
+        {
+          "startFrame": 2120,
+          "endFrame": 2120
+        },
+        {
+          "startFrame": 2140,
+          "endFrame": 2140
+        },
+        {
+          "startFrame": 2160,
+          "endFrame": 2160
+        },
+        {
+          "startFrame": 2180,
+          "endFrame": 2180
+        },
+        {
+          "startFrame": 2200,
+          "endFrame": 2200
+        },
+        {
+          "startFrame": 2220,
+          "endFrame": 2220
+        },
+        {
+          "startFrame": 2280,
+          "endFrame": 2280
+        },
+        {
+          "startFrame": 2300,
+          "endFrame": 2300
+        },
+        {
+          "startFrame": 2320,
+          "endFrame": 2320
+        },
+        {
+          "startFrame": 2340,
+          "endFrame": 2340
+        },
+        {
+          "startFrame": 2360,
+          "endFrame": 2360
+        },
+        {
+          "startFrame": 2380,
+          "endFrame": 2380
+        },
+        {
+          "startFrame": 2400,
+          "endFrame": 2400
+        },
+        {
+          "startFrame": 2420,
+          "endFrame": 2420
+        },
+        {
+          "startFrame": 2440,
+          "endFrame": 2440
+        },
+        {
+          "startFrame": 2460,
+          "endFrame": 2460
+        },
+        {
+          "startFrame": 2500,
+          "endFrame": 2500
+        },
+        {
+          "startFrame": 2520,
+          "endFrame": 2520
+        },
+        {
+          "startFrame": 2540,
+          "endFrame": 2540
+        },
+        {
+          "startFrame": 2560,
+          "endFrame": 2560
+        },
+        {
+          "startFrame": 2580,
+          "endFrame": 2580
+        },
+        {
+          "startFrame": 2600,
+          "endFrame": 2600
+        },
+        {
+          "startFrame": 2620,
+          "endFrame": 2620
+        },
+        {
+          "startFrame": 2640,
+          "endFrame": 2640
+        },
+        {
+          "startFrame": 2660,
+          "endFrame": 2660
+        },
+        {
+          "startFrame": 2680,
+          "endFrame": 2680
+        },
+        {
+          "startFrame": 2700,
+          "endFrame": 2700
+        },
+        {
+          "startFrame": 2720,
+          "endFrame": 2720
+        },
+        {
+          "startFrame": 2740,
+          "endFrame": 2740
+        },
+        {
+          "startFrame": 2760,
+          "endFrame": 2760
+        },
+        {
+          "startFrame": 2780,
+          "endFrame": 2780
+        },
+        {
+          "startFrame": 2800,
+          "endFrame": 2800
+        },
+        {
+          "startFrame": 2820,
+          "endFrame": 2820
+        },
+        {
+          "startFrame": 2840,
+          "endFrame": 2840
+        },
+        {
+          "startFrame": 2860,
+          "endFrame": 2860
+        },
+        {
+          "startFrame": 2880,
+          "endFrame": 2880
+        },
+        {
+          "startFrame": 2900,
+          "endFrame": 2900
+        },
+        {
+          "startFrame": 2920,
+          "endFrame": 2920
+        },
+        {
+          "startFrame": 2940,
+          "endFrame": 2940
+        },
+        {
+          "startFrame": 2960,
+          "endFrame": 2960
+        },
+        {
+          "startFrame": 2980,
+          "endFrame": 2980
+        },
+        {
+          "startFrame": 3000,
+          "endFrame": 3000
+        },
+        {
+          "startFrame": 3020,
+          "endFrame": 3020
+        },
+        {
+          "startFrame": 3040,
+          "endFrame": 3040
+        },
+        {
+          "startFrame": 3060,
+          "endFrame": 3060
+        },
+        {
+          "startFrame": 3080,
+          "endFrame": 3080
+        },
+        {
+          "startFrame": 3100,
+          "endFrame": 3100
+        },
+        {
+          "startFrame": 3120,
+          "endFrame": 3120
+        },
+        {
+          "startFrame": 3140,
+          "endFrame": 3140
+        },
+        {
+          "startFrame": 3160,
+          "endFrame": 3160
+        },
+        {
+          "startFrame": 3180,
+          "endFrame": 3180
+        },
+        {
+          "startFrame": 3200,
+          "endFrame": 3200
+        },
+        {
+          "startFrame": 3220,
+          "endFrame": 3220
+        },
+        {
+          "startFrame": 3240,
+          "endFrame": 3240
+        },
+        {
+          "startFrame": 3260,
+          "endFrame": 3260
+        },
+        {
+          "startFrame": 3280,
+          "endFrame": 3280
+        },
+        {
+          "startFrame": 3360,
+          "endFrame": 3360
+        },
+        {
+          "startFrame": 3380,
+          "endFrame": 3380
+        },
+        {
+          "startFrame": 3400,
+          "endFrame": 3400
+        },
+        {
+          "startFrame": 3420,
+          "endFrame": 3420
+        },
+        {
+          "startFrame": 3440,
+          "endFrame": 3440
+        },
+        {
+          "startFrame": 3460,
+          "endFrame": 3460
+        },
+        {
+          "startFrame": 3480,
+          "endFrame": 3480
+        },
+        {
+          "startFrame": 3500,
+          "endFrame": 3500
+        },
+        {
+          "startFrame": 3520,
+          "endFrame": 3520
+        },
+        {
+          "startFrame": 3540,
+          "endFrame": 3540
+        },
+        {
+          "startFrame": 3560,
+          "endFrame": 3560
+        },
+        {
+          "startFrame": 3580,
+          "endFrame": 3580
+        },
+        {
+          "startFrame": 3600,
+          "endFrame": 3600
+        },
+        {
+          "startFrame": 3620,
+          "endFrame": 3620
+        },
+        {
+          "startFrame": 3640,
+          "endFrame": 3640
+        },
+        {
+          "startFrame": 3660,
+          "endFrame": 3660
+        },
+        {
+          "startFrame": 3680,
+          "endFrame": 3680
+        },
+        {
+          "startFrame": 3700,
+          "endFrame": 3700
+        },
+        {
+          "startFrame": 3720,
+          "endFrame": 3720
+        },
+        {
+          "startFrame": 3740,
+          "endFrame": 3740
+        },
+        {
+          "startFrame": 3760,
+          "endFrame": 3760
+        },
+        {
+          "startFrame": 3780,
+          "endFrame": 3780
+        },
+        {
+          "startFrame": 3800,
+          "endFrame": 3800
+        },
+        {
+          "startFrame": 3820,
+          "endFrame": 3820
+        },
+        {
+          "startFrame": 3840,
+          "endFrame": 3840
+        },
+        {
+          "startFrame": 3860,
+          "endFrame": 3860
+        },
+        {
+          "startFrame": 3880,
+          "endFrame": 3880
+        },
+        {
+          "startFrame": 3900,
+          "endFrame": 3900
+        },
+        {
+          "startFrame": 3920,
+          "endFrame": 3920
+        },
+        {
+          "startFrame": 3940,
+          "endFrame": 3940
+        },
+        {
+          "startFrame": 3960,
+          "endFrame": 3960
+        },
+        {
+          "startFrame": 3980,
+          "endFrame": 3980
+        },
+        {
+          "startFrame": 4000,
+          "endFrame": 4000
+        },
+        {
+          "startFrame": 4020,
+          "endFrame": 4020
+        },
+        {
+          "startFrame": 4040,
+          "endFrame": 4040
+        },
+        {
+          "startFrame": 4060,
+          "endFrame": 4060
+        },
+        {
+          "startFrame": 4080,
+          "endFrame": 4080
+        },
+        {
+          "startFrame": 4100,
+          "endFrame": 4100
+        },
+        {
+          "startFrame": 4120,
+          "endFrame": 4120
+        },
+        {
+          "startFrame": 4140,
+          "endFrame": 4140
+        },
+        {
+          "startFrame": 4160,
+          "endFrame": 4160
+        },
+        {
+          "startFrame": 4180,
+          "endFrame": 4180
+        },
+        {
+          "startFrame": 4200,
+          "endFrame": 4200
+        },
+        {
+          "startFrame": 4220,
+          "endFrame": 4220
+        },
+        {
+          "startFrame": 4240,
+          "endFrame": 4240
+        },
+        {
+          "startFrame": 4260,
+          "endFrame": 4260
+        },
+        {
+          "startFrame": 4280,
+          "endFrame": 4280
+        },
+        {
+          "startFrame": 4300,
+          "endFrame": 4300
+        },
+        {
+          "startFrame": 4320,
+          "endFrame": 4320
+        },
+        {
+          "startFrame": 4340,
+          "endFrame": 4340
+        },
+        {
+          "startFrame": 4360,
+          "endFrame": 4360
+        },
+        {
+          "startFrame": 4380,
+          "endFrame": 4380
+        },
+        {
+          "startFrame": 4400,
+          "endFrame": 4400
+        },
+        {
+          "startFrame": 4420,
+          "endFrame": 4420
+        },
+        {
+          "startFrame": 4440,
+          "endFrame": 4440
+        },
+        {
+          "startFrame": 4460,
+          "endFrame": 4460
+        },
+        {
+          "startFrame": 4480,
+          "endFrame": 4480
+        },
+        {
+          "startFrame": 4500,
+          "endFrame": 4500
+        },
+        {
+          "startFrame": 4520,
+          "endFrame": 4520
+        },
+        {
+          "startFrame": 4660,
+          "endFrame": 4660
+        },
+        {
+          "startFrame": 4700,
+          "endFrame": 4700
+        },
+        {
+          "startFrame": 4720,
+          "endFrame": 4720
+        },
+        {
+          "startFrame": 4740,
+          "endFrame": 4740
+        },
+        {
+          "startFrame": 4760,
+          "endFrame": 4760
+        },
+        {
+          "startFrame": 4780,
+          "endFrame": 4780
+        },
+        {
+          "startFrame": 4800,
+          "endFrame": 4800
+        },
+        {
+          "startFrame": 4820,
+          "endFrame": 4820
+        },
+        {
+          "startFrame": 4840,
+          "endFrame": 4840
+        },
+        {
+          "startFrame": 4860,
+          "endFrame": 4860
+        },
+        {
+          "startFrame": 4880,
+          "endFrame": 4880
+        },
+        {
+          "startFrame": 4900,
+          "endFrame": 4900
+        },
+        {
+          "startFrame": 4920,
+          "endFrame": 4920
+        },
+        {
+          "startFrame": 4940,
+          "endFrame": 4940
+        },
+        {
+          "startFrame": 4960,
+          "endFrame": 4960
+        },
+        {
+          "startFrame": 4980,
+          "endFrame": 4980
+        },
+        {
+          "startFrame": 5000,
+          "endFrame": 5000
+        },
+        {
+          "startFrame": 5020,
+          "endFrame": 5020
+        },
+        {
+          "startFrame": 5040,
+          "endFrame": 5040
+        },
+        {
+          "startFrame": 5060,
+          "endFrame": 5060
+        },
+        {
+          "startFrame": 5120,
+          "endFrame": 5120
+        },
+        {
+          "startFrame": 5140,
+          "endFrame": 5140
+        },
+        {
+          "startFrame": 5160,
+          "endFrame": 5160
+        },
+        {
+          "startFrame": 5180,
+          "endFrame": 5180
+        },
+        {
+          "startFrame": 5200,
+          "endFrame": 5200
+        },
+        {
+          "startFrame": 5220,
+          "endFrame": 5220
+        },
+        {
+          "startFrame": 5240,
+          "endFrame": 5240
+        },
+        {
+          "startFrame": 5260,
+          "endFrame": 5260
+        },
+        {
+          "startFrame": 5280,
+          "endFrame": 5280
+        },
+        {
+          "startFrame": 5300,
+          "endFrame": 5300
+        },
+        {
+          "startFrame": 5320,
+          "endFrame": 5320
+        },
+        {
+          "startFrame": 5340,
+          "endFrame": 5340
+        },
+        {
+          "startFrame": 5360,
+          "endFrame": 5360
+        },
+        {
+          "startFrame": 5380,
+          "endFrame": 5380
+        },
+        {
+          "startFrame": 5400,
+          "endFrame": 5400
+        },
+        {
+          "startFrame": 5420,
+          "endFrame": 5420
+        },
+        {
+          "startFrame": 5440,
+          "endFrame": 5440
+        },
+        {
+          "startFrame": 5460,
+          "endFrame": 5460
+        },
+        {
+          "startFrame": 5480,
+          "endFrame": 5480
+        },
+        {
+          "startFrame": 5500,
+          "endFrame": 5500
+        },
+        {
+          "startFrame": 5520,
+          "endFrame": 5520
+        },
+        {
+          "startFrame": 5540,
+          "endFrame": 5540
+        },
+        {
+          "startFrame": 5560,
+          "endFrame": 5560
+        },
+        {
+          "startFrame": 5580,
+          "endFrame": 5580
+        },
+        {
+          "startFrame": 5600,
+          "endFrame": 5600
+        },
+        {
+          "startFrame": 5620,
+          "endFrame": 5620
+        },
+        {
+          "startFrame": 5640,
+          "endFrame": 5640
+        },
+        {
+          "startFrame": 5660,
+          "endFrame": 5660
+        },
+        {
+          "startFrame": 5680,
+          "endFrame": 5680
+        },
+        {
+          "startFrame": 5700,
+          "endFrame": 5700
+        },
+        {
+          "startFrame": 5711,
+          "endFrame": 5711
+        }
+      ],
+      "leftPersonScreen": [],
+      "leftPersonElsewhere": [
+        {
+          "startFrame": 220,
+          "endFrame": 220
+        },
+        {
+          "startFrame": 240,
+          "endFrame": 240
+        },
+        {
+          "startFrame": 940,
+          "endFrame": 940
+        },
+        {
+          "startFrame": 960,
+          "endFrame": 960
+        },
+        {
+          "startFrame": 2240,
+          "endFrame": 2240
+        },
+        {
+          "startFrame": 2260,
+          "endFrame": 2260
+        },
+        {
+          "startFrame": 2480,
+          "endFrame": 2480
+        },
+        {
+          "startFrame": 3300,
+          "endFrame": 3300
+        },
+        {
+          "startFrame": 3320,
+          "endFrame": 3320
+        },
+        {
+          "startFrame": 3340,
+          "endFrame": 3340
+        },
+        {
+          "startFrame": 4540,
+          "endFrame": 4540
+        },
+        {
+          "startFrame": 4560,
+          "endFrame": 4560
+        },
+        {
+          "startFrame": 4580,
+          "endFrame": 4580
+        },
+        {
+          "startFrame": 4600,
+          "endFrame": 4600
+        },
+        {
+          "startFrame": 4620,
+          "endFrame": 4620
+        },
+        {
+          "startFrame": 4640,
+          "endFrame": 4640
+        },
+        {
+          "startFrame": 4680,
+          "endFrame": 4680
+        },
+        {
+          "startFrame": 5080,
+          "endFrame": 5080
+        },
+        {
+          "startFrame": 5100,
+          "endFrame": 5100
+        }
+      ]
+    },
+    "videoInfo": {
+      "totalFrames": 5711,
+      "frameInterval": 20
+    }
+  }
+]

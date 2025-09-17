@@ -9,6 +9,7 @@ const KappaAgreementAnalysis = () => {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [results, setResults] = useState(null);
   const [showTimelines, setShowTimelines] = useState(false);
+  const [warningMessage, setWarningMessage] = useState(null);
 
   // Handle file uploads
   const handleFileUpload = (event) => {
@@ -252,58 +253,65 @@ const KappaAgreementAnalysis = () => {
     const doctorLists = [];
     const patientLists = [];
     
+    // First pass: collect all frames that ANY annotator has annotated
+    const allAnnotatedFrames = new Set();
+    
     files.forEach(file => {
       const data = file.data[1]?.manualAnnotations;
-      if (!data) {
-        doctorLists.push([]);
-        patientLists.push([]);
-        return;
-      }
+      if (!data) return;
       
-      // Get all annotated frames and sort them
-      const allFrames = new Set();
-      
-      // Collect frames from all annotation types
+      // Collect frames from all annotation types for this file
       ['rightPersonGaze', 'rightPersonScreen', 'rightPersonElsewhere', 
        'leftPersonGaze', 'leftPersonScreen', 'leftPersonElsewhere'].forEach(type => {
         if (data[type]) {
           data[type].forEach(range => {
             for (let frame = range.startFrame; frame <= range.endFrame; frame++) {
-              allFrames.add(frame);
+              allAnnotatedFrames.add(frame);
             }
           });
         }
       });
+    });
+    
+    // Create a master frame list that all annotators will be aligned to
+    const masterFrameList = Array.from(allAnnotatedFrames).sort((a, b) => a - b);
+    
+    // Track frames that are missing annotations from some annotators
+    let framesWithMissingAnnotations = 0;
+    
+    // Second pass: create aligned lists for each annotator
+    files.forEach(file => {
+      const data = file.data[1]?.manualAnnotations;
       
-      const sortedFrames = Array.from(allFrames).sort((a, b) => a - b);
-      
-      // Create doctor category list
+      // Create doctor category list aligned to master frame list
       const doctorList = [];
-      sortedFrames.forEach(frame => {
-        // Check which doctor category this frame belongs to
-        if (data.rightPersonGaze?.some(range => frame >= range.startFrame && frame <= range.endFrame)) {
+      masterFrameList.forEach(frame => {
+        if (!data) {
+          doctorList.push(0); // No data for this annotator
+        } else if (data.rightPersonGaze?.some(range => frame >= range.startFrame && frame <= range.endFrame)) {
           doctorList.push(1); // Looking at patient
         } else if (data.rightPersonScreen?.some(range => frame >= range.startFrame && frame <= range.endFrame)) {
           doctorList.push(2); // Looking at screen
         } else if (data.rightPersonElsewhere?.some(range => frame >= range.startFrame && frame <= range.endFrame)) {
           doctorList.push(3); // Looking elsewhere
         } else {
-          doctorList.push(0); // No interaction (shouldn't happen with current logic)
+          doctorList.push(0); // Frame not annotated by this annotator
         }
       });
       
-      // Create patient category list
+      // Create patient category list aligned to master frame list
       const patientList = [];
-      sortedFrames.forEach(frame => {
-        // Check which patient category this frame belongs to
-        if (data.leftPersonGaze?.some(range => frame >= range.startFrame && frame <= range.endFrame)) {
+      masterFrameList.forEach(frame => {
+        if (!data) {
+          patientList.push(0); // No data for this annotator
+        } else if (data.leftPersonGaze?.some(range => frame >= range.startFrame && frame <= range.endFrame)) {
           patientList.push(1); // Looking at doctor
         } else if (data.leftPersonScreen?.some(range => frame >= range.startFrame && frame <= range.endFrame)) {
           patientList.push(2); // Looking at screen
         } else if (data.leftPersonElsewhere?.some(range => frame >= range.startFrame && frame <= range.endFrame)) {
           patientList.push(3); // Looking elsewhere
         } else {
-          patientList.push(0); // No interaction (shouldn't happen with current logic)
+          patientList.push(0); // Frame not annotated by this annotator
         }
       });
       
@@ -311,7 +319,27 @@ const KappaAgreementAnalysis = () => {
       patientLists.push(patientList);
     });
     
-    return { doctorLists, patientLists };
+    // Count frames that are missing annotations from some annotators
+    masterFrameList.forEach(frame => {
+      const frameHasMissingAnnotations = files.some(file => {
+        const data = file.data[1]?.manualAnnotations;
+        if (!data) return true; // This annotator has no data
+        
+        // Check if this frame is annotated by this annotator
+        const isAnnotated = ['rightPersonGaze', 'rightPersonScreen', 'rightPersonElsewhere', 
+                            'leftPersonGaze', 'leftPersonScreen', 'leftPersonElsewhere'].some(type => {
+          return data[type]?.some(range => frame >= range.startFrame && frame <= range.endFrame);
+        });
+        
+        return !isAnnotated; // Frame is missing if not annotated
+      });
+      
+      if (frameHasMissingAnnotations) {
+        framesWithMissingAnnotations++;
+      }
+    });
+    
+    return { doctorLists, patientLists, framesWithMissingAnnotations };
   };
 
   // Calculate Cohen's Kappa for two raters
@@ -418,11 +446,23 @@ const KappaAgreementAnalysis = () => {
       return;
     }
 
-    const { doctorLists, patientLists } = convertToSimpleLists(currentVideoFiles);
+    const { doctorLists, patientLists, framesWithMissingAnnotations } = convertToSimpleLists(currentVideoFiles);
+
+    console.log("=========doctorLists=========");
+    console.log(doctorLists);
+    console.log("=========patientLists=========");
+    console.log(patientLists);
     
     if (doctorLists.length < 2) {
       alert("Need at least 2 valid annotation files to calculate agreement.");
       return;
+    }
+
+    // Show warning if there are frames with missing annotations
+    if (framesWithMissingAnnotations > 0) {
+      setWarningMessage(`Warning: ${framesWithMissingAnnotations} frames were only annotated by one annotator in the given annotation files. To calculate Kappa, the frames were annotated as '0'.`);
+    } else {
+      setWarningMessage(null);
     }
 
     const annotatorNames = getCurrentAnnotators();
@@ -433,7 +473,7 @@ const KappaAgreementAnalysis = () => {
       for (let j = i + 1; j < doctorLists.length; j++) {
         const annotator1 = currentVideoFiles[i].data[0]?.annotatorName || `Annotator ${i + 1}`;
         const annotator2 = currentVideoFiles[j].data[0]?.annotatorName || `Annotator ${j + 1}`;
-        
+
         const doctorKappa = calculateKappa(doctorLists[i], doctorLists[j]);
         const patientKappa = calculateKappa(patientLists[i], patientLists[j]);
         
@@ -481,6 +521,38 @@ const KappaAgreementAnalysis = () => {
       <h2 className="text-2xl font-bold text-center mb-6 border-b border-gray-200 pb-4">
         Multi-Video Kappa Agreement Analysis
       </h2>
+
+      {/* Warning Popup */}
+      {warningMessage && (
+        <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm text-yellow-700 font-medium">
+                {warningMessage}
+              </p>
+            </div>
+            <div className="ml-auto pl-3">
+              <div className="-mx-1.5 -my-1.5">
+                <button
+                  type="button"
+                  onClick={() => setWarningMessage(null)}
+                  className="inline-flex bg-yellow-50 rounded-md p-1.5 text-yellow-500 hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-yellow-50 focus:ring-yellow-600"
+                >
+                  <span className="sr-only">Dismiss</span>
+                  <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* File Upload */}
       <div className="mb-6">

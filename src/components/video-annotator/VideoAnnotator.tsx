@@ -49,6 +49,23 @@ const VideoAnnotator = () => {
           resolve();
         };
       });
+
+      // After video loads, go to next frame then back to previous frame
+      setTimeout(() => {
+        // Go to next frame (frame 1)
+        setCurrentFrame(1);
+        if (videoRef.current) {
+          videoRef.current.currentTime = 1 / 30;
+        }
+        
+        // Then go back to previous frame (frame 0) after a short delay
+        setTimeout(() => {
+          setCurrentFrame(0);
+          if (videoRef.current) {
+            videoRef.current.currentTime = 0;
+          }
+        }, 100);
+      }, 100);
     } catch (error) {
       console.error("Error loading video:", error);
       alert("Error loading video. Please try another file.");
@@ -76,7 +93,19 @@ const VideoAnnotator = () => {
     (amount) => {
       setCurrentFrame((prev) => {
         const next = prev + amount;
-        return Math.max(0, Math.min(next, totalFrames));
+        
+        // For forward navigation, only move if we can make the full step
+        if (amount > 0) {
+          // Check if we can move forward by the full amount
+          if (next > totalFrames) {
+            return prev; // Stay at current frame if we can't make the full step
+          }
+          return next;
+        }
+        // For backward navigation, clamp to 0
+        else {
+          return Math.max(0, next);
+        }
       });
     },
     [totalFrames]

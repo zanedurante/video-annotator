@@ -1,0 +1,223 @@
+[
+  {
+    "videoFile": "try3.mov",
+    "annotatorName": "bob",
+    "videoTitle": "try3.mov"
+  },
+  {
+    "manualAnnotations": {
+      "rightPersonGaze": [
+        {
+          "startFrame": 0,
+          "endFrame": 0
+        },
+        {
+          "startFrame": 50,
+          "endFrame": 50
+        },
+        {
+          "startFrame": 100,
+          "endFrame": 100
+        },
+        {
+          "startFrame": 150,
+          "endFrame": 150
+        },
+        {
+          "startFrame": 200,
+          "endFrame": 200
+        },
+        {
+          "startFrame": 250,
+          "endFrame": 250
+        },
+        {
+          "startFrame": 300,
+          "endFrame": 300
+        },
+        {
+          "startFrame": 350,
+          "endFrame": 350
+        },
+        {
+          "startFrame": 400,
+          "endFrame": 400
+        },
+        {
+          "startFrame": 450,
+          "endFrame": 450
+        },
+        {
+          "startFrame": 500,
+          "endFrame": 500
+        },
+        {
+          "startFrame": 550,
+          "endFrame": 550
+        },
+        {
+          "startFrame": 600,
+          "endFrame": 600
+        },
+        {
+          "startFrame": 650,
+          "endFrame": 650
+        },
+        {
+          "startFrame": 700,
+          "endFrame": 700
+        },
+        {
+          "startFrame": 750,
+          "endFrame": 750
+        },
+        {
+          "startFrame": 800,
+          "endFrame": 800
+        },
+        {
+          "startFrame": 850,
+          "endFrame": 850
+        },
+        {
+          "startFrame": 900,
+          "endFrame": 900
+        },
+        {
+          "startFrame": 950,
+          "endFrame": 950
+        },
+        {
+          "startFrame": 1000,
+          "endFrame": 1000
+        },
+        {
+          "startFrame": 1050,
+          "endFrame": 1050
+        },
+        {
+          "startFrame": 1100,
+          "endFrame": 1100
+        },
+        {
+          "startFrame": 1150,
+          "endFrame": 1150
+        },
+        {
+          "startFrame": 1200,
+          "endFrame": 1200
+        }
+      ],
+      "rightPersonScreen": [],
+      "rightPersonElsewhere": [],
+      "leftPersonGaze": [
+        {
+          "startFrame": 0,
+          "endFrame": 0
+        },
+        {
+          "startFrame": 50,
+          "endFrame": 50
+        },
+        {
+          "startFrame": 100,
+          "endFrame": 100
+        },
+        {
+          "startFrame": 150,
+          "endFrame": 150
+        },
+        {
+          "startFrame": 200,
+          "endFrame": 200
+        },
+        {
+          "startFrame": 250,
+          "endFrame": 250
+        },
+        {
+          "startFrame": 300,
+          "endFrame": 300
+        },
+        {
+          "startFrame": 350,
+          "endFrame": 350
+        },
+        {
+          "startFrame": 400,
+          "endFrame": 400
+        },
+        {
+          "startFrame": 450,
+          "endFrame": 450
+        },
+        {
+          "startFrame": 500,
+          "endFrame": 500
+        },
+        {
+          "startFrame": 550,
+          "endFrame": 550
+        },
+        {
+          "startFrame": 600,
+          "endFrame": 600
+        },
+        {
+          "startFrame": 650,
+          "endFrame": 650
+        },
+        {
+          "startFrame": 700,
+          "endFrame": 700
+        },
+        {
+          "startFrame": 750,
+          "endFrame": 750
+        },
+        {
+          "startFrame": 800,
+          "endFrame": 800
+        },
+        {
+          "startFrame": 850,
+          "endFrame": 850
+        },
+        {
+          "startFrame": 900,
+          "endFrame": 900
+        },
+        {
+          "startFrame": 950,
+          "endFrame": 950
+        },
+        {
+          "startFrame": 1000,
+          "endFrame": 1000
+        },
+        {
+          "startFrame": 1050,
+          "endFrame": 1050
+        },
+        {
+          "startFrame": 1100,
+          "endFrame": 1100
+        },
+        {
+          "startFrame": 1150,
+          "endFrame": 1150
+        },
+        {
+          "startFrame": 1200,
+          "endFrame": 1200
+        }
+      ],
+      "leftPersonScreen": [],
+      "leftPersonElsewhere": []
+    },
+    "videoInfo": {
+      "totalFrames": 1243,
+      "frameInterval": 50
+    }
+  }
+]
