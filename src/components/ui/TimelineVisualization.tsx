@@ -104,12 +104,16 @@ const TimelineVisualization = ({
         // Initialize value groups for doctor
         annotationsByValue[1] = []; // Looking at patient
         annotationsByValue[2] = []; // Looking at screen
-        annotationsByValue[3] = []; // Looking elsewhere
+        annotationsByValue[3] = []; // Physical exam
+        annotationsByValue[4] = []; // Looking at other devices
+        annotationsByValue[5] = []; // Looking elsewhere
       } else {
         // Initialize value groups for patient
-        annotationsByValue[4] = []; // Looking at doctor
-        annotationsByValue[5] = []; // Looking elsewhere
-        annotationsByValue[6] = []; // Looking at screen - NEW
+        annotationsByValue[5] = []; // Looking at doctor
+        annotationsByValue[6] = []; // Looking at screen
+        annotationsByValue[7] = []; // Physical exam
+        annotationsByValue[8] = []; // Looking at other devices
+        annotationsByValue[9] = []; // Looking elsewhere
       }
       
       // Group frames by annotation value
@@ -124,16 +128,20 @@ const TimelineVisualization = ({
         // Set color based on value and type
         if (type === 'doctor') {
           switch(parseInt(value)) {
-            case 1: ctx.fillStyle = '#1bd018'; break; // Green
-            case 2: ctx.fillStyle = '#ef4444'; break; // Red (red-500)
-            case 3: ctx.fillStyle = '#9ca3af'; break; // Gray
+            case 1: ctx.fillStyle = '#1bd018'; break; // Green - Looking at patient
+            case 2: ctx.fillStyle = '#ef4444'; break; // Red - Looking at screen
+            case 3: ctx.fillStyle = '#3b82f6'; break; // Blue - Physical exam
+            case 4: ctx.fillStyle = '#f59e0b'; break; // Orange - Looking at other devices
+            case 5: ctx.fillStyle = '#9ca3af'; break; // Gray - Looking elsewhere
             default: ctx.fillStyle = '#9ca3af';
           }
         } else {
           switch(parseInt(value)) {
-            case 4: ctx.fillStyle = '#1bd018'; break; // Green - Same as doctor looking at patient
-            case 5: ctx.fillStyle = '#ef4444'; break; // Red (red-500) - Same as doctor looking at screen
-            case 6: ctx.fillStyle = '#9ca3af'; break; // Gray
+            case 5: ctx.fillStyle = '#1bd018'; break; // Green - Looking at doctor
+            case 6: ctx.fillStyle = '#ef4444'; break; // Red - Looking at screen
+            case 7: ctx.fillStyle = '#3b82f6'; break; // Blue - Physical exam
+            case 8: ctx.fillStyle = '#f59e0b'; break; // Orange - Looking at other devices
+            case 9: ctx.fillStyle = '#9ca3af'; break; // Gray - Looking elsewhere
             default: ctx.fillStyle = '#9ca3af';
           }
         }

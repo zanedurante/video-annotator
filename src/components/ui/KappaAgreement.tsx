@@ -293,7 +293,7 @@ const KappaAgreementAnalysis = () => {
         } else if (data.rightPersonScreen?.some(range => frame >= range.startFrame && frame <= range.endFrame)) {
           doctorList.push(2); // Looking at screen
         } else if (data.rightPersonElsewhere?.some(range => frame >= range.startFrame && frame <= range.endFrame)) {
-          doctorList.push(3); // Looking elsewhere
+          doctorList.push(5); // Looking elsewhere (moved to 5)
         } else {
           doctorList.push(0); // Frame not annotated by this annotator
         }
@@ -305,11 +305,11 @@ const KappaAgreementAnalysis = () => {
         if (!data) {
           patientList.push(0); // No data for this annotator
         } else if (data.leftPersonGaze?.some(range => frame >= range.startFrame && frame <= range.endFrame)) {
-          patientList.push(1); // Looking at doctor
+          patientList.push(5); // Looking at doctor (moved to 5)
         } else if (data.leftPersonScreen?.some(range => frame >= range.startFrame && frame <= range.endFrame)) {
-          patientList.push(2); // Looking at screen
+          patientList.push(6); // Looking at screen (moved to 6)
         } else if (data.leftPersonElsewhere?.some(range => frame >= range.startFrame && frame <= range.endFrame)) {
-          patientList.push(3); // Looking elsewhere
+          patientList.push(9); // Looking elsewhere (moved to 9)
         } else {
           patientList.push(0); // Frame not annotated by this annotator
         }
@@ -688,6 +688,14 @@ const KappaAgreementAnalysis = () => {
               <div className="flex items-center">
                 <span className="w-4 h-4 bg-red-500 rounded mr-1"></span>
                 <span>Looking at Screen</span>
+              </div>
+              <div className="flex items-center">
+                <span className="w-4 h-4 bg-blue-500 rounded mr-1"></span>
+                <span>Physical exam</span>
+              </div>
+              <div className="flex items-center">
+                <span className="w-4 h-4 bg-orange-500 rounded mr-1"></span>
+                <span>Looking at other devices</span>
               </div>
               <div className="flex items-center">
                 <span className="w-4 h-4 bg-gray-500 rounded mr-1"></span>

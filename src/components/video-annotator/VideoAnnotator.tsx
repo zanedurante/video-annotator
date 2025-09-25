@@ -138,7 +138,7 @@ const VideoAnnotator = () => {
       // Doctor phase controls
       if (
         annotationPhase === "doctor" &&
-        ["Digit0", "Digit1", "Digit2", "Digit3"].includes(event.code)
+        ["Digit0", "Digit1", "Digit2", "Digit3", "Digit4", "Digit5"].includes(event.code)
       ) {
         const value = parseInt(event.code.replace("Digit", ""));
         addAnnotation(value);
@@ -147,7 +147,7 @@ const VideoAnnotator = () => {
       // Patient phase controls
       else if (
         annotationPhase === "patient" &&
-        ["Digit0", "Digit4", "Digit5", "Digit6"].includes(event.code)
+        ["Digit0", "Digit5", "Digit6", "Digit7", "Digit8", "Digit9"].includes(event.code)
       ) {
         const value = parseInt(event.code.replace("Digit", ""));
         addAnnotation(value);
@@ -625,28 +625,40 @@ const VideoAnnotator = () => {
       metrics = {
         patientGaze: { correct: 0, total: 0 },
         screenGaze: { correct: 0, total: 0 },
+        physicalExam: { correct: 0, total: 0 },
+        otherDevices: { correct: 0, total: 0 },
+        elsewhere: { correct: 0, total: 0 },
       };
-  
+
       Object.entries(userAnnotations).forEach(([frame, value]) => {
         const frameNum = parseInt(frame);
-  
+
         // FIXED: Check if doctor is looking at patient in model data
         // Using rightPersonGaze for doctor looking at patient
         const modelPatientGaze = getModelGazeStatus(
           frameNum,
           modelData[1]?.manualAnnotations?.rightPersonGaze || []
         );
-  
+
         // Check if doctor is looking at screen in model data
         const modelScreenGaze = getModelGazeStatus(
           frameNum,
           modelData[1]?.manualAnnotations?.rightPersonScreen || []
         );
-  
+
+        // Check if doctor is looking elsewhere in model data
+        const modelElsewhereGaze = getModelGazeStatus(
+          frameNum,
+          modelData[1]?.manualAnnotations?.rightPersonElsewhere || []
+        );
+
         // User's annotations
         const userPatientGaze = value === 1; // User says doctor is looking at patient
         const userScreenGaze = value === 2; // User says doctor is looking at screen
-  
+        const userPhysicalExam = value === 3; // User says doctor is doing physical exam
+        const userOtherDevices = value === 4; // User says doctor is looking at other devices
+        const userElsewhere = value === 5; // User says doctor is looking elsewhere
+
         // Calculate accuracy for patient gaze
         if (userPatientGaze || modelPatientGaze) {
           metrics.patientGaze.total++;
@@ -654,7 +666,7 @@ const VideoAnnotator = () => {
             metrics.patientGaze.correct++;
           }
         }
-  
+
         // Calculate accuracy for screen gaze
         if (userScreenGaze || modelScreenGaze) {
           metrics.screenGaze.total++;
@@ -662,17 +674,42 @@ const VideoAnnotator = () => {
             metrics.screenGaze.correct++;
           }
         }
+
+        // Calculate accuracy for physical exam (new category - no model data yet)
+        if (userPhysicalExam) {
+          metrics.physicalExam.total++;
+          // For now, we can't validate against model data, so we'll mark as correct
+          metrics.physicalExam.correct++;
+        }
+
+        // Calculate accuracy for other devices (new category - no model data yet)
+        if (userOtherDevices) {
+          metrics.otherDevices.total++;
+          // For now, we can't validate against model data, so we'll mark as correct
+          metrics.otherDevices.correct++;
+        }
+
+        // Calculate accuracy for elsewhere gaze
+        if (userElsewhere || modelElsewhereGaze) {
+          metrics.elsewhere.total++;
+          if (userElsewhere === modelElsewhereGaze) {
+            metrics.elsewhere.correct++;
+          }
+        }
       });
     } else {
       // Evaluating patient gaze annotations
       metrics = {
         doctorGaze: { correct: 0, total: 0 },
-        screenGaze: { correct: 0, total: 0 }, // New metric for patient screen gaze
+        screenGaze: { correct: 0, total: 0 },
+        physicalExam: { correct: 0, total: 0 },
+        otherDevices: { correct: 0, total: 0 },
+        elsewhere: { correct: 0, total: 0 },
       };
-  
+
       Object.entries(userAnnotations).forEach(([frame, value]) => {
         const frameNum = parseInt(frame);
-  
+
         // Check if patient is looking at doctor in model data
         const modelDoctorGaze = getModelGazeStatus(
           frameNum,
@@ -684,11 +721,20 @@ const VideoAnnotator = () => {
           frameNum,
           modelData[1]?.manualAnnotations?.leftPersonScreen || []
         );
-  
+
+        // Check if patient is looking elsewhere in model data
+        const modelElsewhereGaze = getModelGazeStatus(
+          frameNum,
+          modelData[1]?.manualAnnotations?.leftPersonElsewhere || []
+        );
+
         // User's annotations
-        const userDoctorGaze = value === 4; // User says patient is looking at doctor
-        const userScreenGaze = value === 5; // User says patient is looking at screen (changed from 6 to 5)
-  
+        const userDoctorGaze = value === 5; // User says patient is looking at doctor
+        const userScreenGaze = value === 6; // User says patient is looking at screen
+        const userPhysicalExam = value === 7; // User says patient is doing physical exam
+        const userOtherDevices = value === 8; // User says patient is looking at other devices
+        const userElsewhere = value === 9; // User says patient is looking elsewhere
+
         // Calculate accuracy for doctor gaze
         if (userDoctorGaze || modelDoctorGaze) {
           metrics.doctorGaze.total++;
@@ -697,11 +743,33 @@ const VideoAnnotator = () => {
           }
         }
         
-        // Calculate accuracy for screen gaze - NEW
+        // Calculate accuracy for screen gaze
         if (userScreenGaze || modelScreenGaze) {
           metrics.screenGaze.total++;
           if (userScreenGaze === modelScreenGaze) {
             metrics.screenGaze.correct++;
+          }
+        }
+
+        // Calculate accuracy for physical exam (new category - no model data yet)
+        if (userPhysicalExam) {
+          metrics.physicalExam.total++;
+          // For now, we can't validate against model data, so we'll mark as correct
+          metrics.physicalExam.correct++;
+        }
+
+        // Calculate accuracy for other devices (new category - no model data yet)
+        if (userOtherDevices) {
+          metrics.otherDevices.total++;
+          // For now, we can't validate against model data, so we'll mark as correct
+          metrics.otherDevices.correct++;
+        }
+
+        // Calculate accuracy for elsewhere gaze
+        if (userElsewhere || modelElsewhereGaze) {
+          metrics.elsewhere.total++;
+          if (userElsewhere === modelElsewhereGaze) {
+            metrics.elsewhere.correct++;
           }
         }
       });
@@ -944,6 +1012,18 @@ const VideoAnnotator = () => {
                   <span className="inline-block w-24 px-2 py-1 bg-gray-200 rounded mr-2 text-center">
                     3
                   </span>
+                  <span>Physical exam</span>
+                </li>
+                <li className="flex items-center">
+                  <span className="inline-block w-24 px-2 py-1 bg-gray-200 rounded mr-2 text-center">
+                    4
+                  </span>
+                  <span>Looking at other devices</span>
+                </li>
+                <li className="flex items-center">
+                  <span className="inline-block w-24 px-2 py-1 bg-gray-200 rounded mr-2 text-center">
+                    5
+                  </span>
                   <span>Looking Elsewhere</span>
                 </li>
               </ul>
@@ -962,19 +1042,31 @@ const VideoAnnotator = () => {
                 </li>
                 <li className="flex items-center">
                   <span className="inline-block w-24 px-2 py-1 bg-gray-200 rounded mr-2 text-center">
-                    4
+                    5
                   </span>
                   <span>Looking at Doctor</span>
                 </li>
                 <li className="flex items-center">
                   <span className="inline-block w-24 px-2 py-1 bg-gray-200 rounded mr-2 text-center">
-                    5
+                    6
                   </span>
                   <span>Looking at Screen</span>
                 </li>
                 <li className="flex items-center">
                   <span className="inline-block w-24 px-2 py-1 bg-gray-200 rounded mr-2 text-center">
-                    6
+                    7
+                  </span>
+                  <span>Physical exam</span>
+                </li>
+                <li className="flex items-center">
+                  <span className="inline-block w-24 px-2 py-1 bg-gray-200 rounded mr-2 text-center">
+                    8
+                  </span>
+                  <span>Looking at other devices</span>
+                </li>
+                <li className="flex items-center">
+                  <span className="inline-block w-24 px-2 py-1 bg-gray-200 rounded mr-2 text-center">
+                    9
                   </span>
                   <span>Looking Elsewhere</span>
                 </li>
@@ -1037,6 +1129,14 @@ const VideoAnnotator = () => {
                   <span>Looking at Screen</span>
                 </li>
                 <li className="flex items-center">
+                  <span className="inline-block w-6 h-6 rounded bg-blue-500 mr-2"></span>
+                  <span>Physical exam</span>
+                </li>
+                <li className="flex items-center">
+                  <span className="inline-block w-6 h-6 rounded bg-orange-500 mr-2"></span>
+                  <span>Looking at other devices</span>
+                </li>
+                <li className="flex items-center">
                   <span className="inline-block w-6 h-6 rounded bg-gray-400 mr-2"></span>
                   <span>Looking Elsewhere</span>
                 </li>
@@ -1053,6 +1153,14 @@ const VideoAnnotator = () => {
                 <li className="flex items-center">
                   <span className="inline-block w-6 h-6 rounded bg-red-500 mr-2"></span>
                   <span>Looking at Screen</span>
+                </li>
+                <li className="flex items-center">
+                  <span className="inline-block w-6 h-6 rounded bg-blue-500 mr-2"></span>
+                  <span>Physical exam</span>
+                </li>
+                <li className="flex items-center">
+                  <span className="inline-block w-6 h-6 rounded bg-orange-500 mr-2"></span>
+                  <span>Looking at other devices</span>
                 </li>
                 <li className="flex items-center">
                   <span className="inline-block w-6 h-6 rounded bg-gray-400 mr-2"></span>
@@ -1166,6 +1274,138 @@ const VideoAnnotator = () => {
                         ></div>
                       </div>
                     </div>
+
+                    {/* Physical Exam */}
+                    <div>
+                      <div className="flex justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-700">
+                          Physical exam
+                        </span>
+                        <span className="text-sm font-medium text-gray-700">
+                          {(() => {
+                            const stats = calculateDetailedAccuracyStats(
+                              annotations.doctor,
+                              modelData,
+                              "doctor"
+                            );
+                            if (!stats?.physicalExam.total) return "0%";
+                            return `${(
+                              (stats.physicalExam.correct /
+                                stats.physicalExam.total) *
+                              100
+                            ).toFixed(1)}%`;
+                          })()}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div
+                          className="bg-blue-500 h-2.5 rounded-full transition-all duration-300"
+                          style={{
+                            width: (() => {
+                              const stats = calculateDetailedAccuracyStats(
+                                annotations.doctor,
+                                modelData,
+                                "doctor"
+                              );
+                              if (!stats?.physicalExam.total) return "0%";
+                              return `${
+                                (stats.physicalExam.correct /
+                                  stats.physicalExam.total) *
+                                100
+                              }%`;
+                            })(),
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Looking at other devices */}
+                    <div>
+                      <div className="flex justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-700">
+                          Looking at other devices
+                        </span>
+                        <span className="text-sm font-medium text-gray-700">
+                          {(() => {
+                            const stats = calculateDetailedAccuracyStats(
+                              annotations.doctor,
+                              modelData,
+                              "doctor"
+                            );
+                            if (!stats?.otherDevices.total) return "0%";
+                            return `${(
+                              (stats.otherDevices.correct /
+                                stats.otherDevices.total) *
+                              100
+                            ).toFixed(1)}%`;
+                          })()}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div
+                          className="bg-orange-500 h-2.5 rounded-full transition-all duration-300"
+                          style={{
+                            width: (() => {
+                              const stats = calculateDetailedAccuracyStats(
+                                annotations.doctor,
+                                modelData,
+                                "doctor"
+                              );
+                              if (!stats?.otherDevices.total) return "0%";
+                              return `${
+                                (stats.otherDevices.correct /
+                                  stats.otherDevices.total) *
+                                100
+                              }%`;
+                            })(),
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Looking Elsewhere */}
+                    <div>
+                      <div className="flex justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-700">
+                          Looking Elsewhere
+                        </span>
+                        <span className="text-sm font-medium text-gray-700">
+                          {(() => {
+                            const stats = calculateDetailedAccuracyStats(
+                              annotations.doctor,
+                              modelData,
+                              "doctor"
+                            );
+                            if (!stats?.elsewhere.total) return "0%";
+                            return `${(
+                              (stats.elsewhere.correct /
+                                stats.elsewhere.total) *
+                              100
+                            ).toFixed(1)}%`;
+                          })()}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div
+                          className="bg-gray-400 h-2.5 rounded-full transition-all duration-300"
+                          style={{
+                            width: (() => {
+                              const stats = calculateDetailedAccuracyStats(
+                                annotations.doctor,
+                                modelData,
+                                "doctor"
+                              );
+                              if (!stats?.elsewhere.total) return "0%";
+                              return `${
+                                (stats.elsewhere.correct /
+                                  stats.elsewhere.total) *
+                                100
+                              }%`;
+                            })(),
+                          }}
+                        ></div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -1255,6 +1495,138 @@ const VideoAnnotator = () => {
                               return `${
                                 (stats.screenGaze.correct /
                                   stats.screenGaze.total) *
+                                100
+                              }%`;
+                            })(),
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Physical Exam */}
+                    <div>
+                      <div className="flex justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-700">
+                          Physical exam
+                        </span>
+                        <span className="text-sm font-medium text-gray-700">
+                          {(() => {
+                            const stats = calculateDetailedAccuracyStats(
+                              annotations.patient,
+                              modelData,
+                              "patient"
+                            );
+                            if (!stats?.physicalExam.total) return "0%";
+                            return `${(
+                              (stats.physicalExam.correct /
+                                stats.physicalExam.total) *
+                              100
+                            ).toFixed(1)}%`;
+                          })()}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div
+                          className="bg-blue-500 h-2.5 rounded-full transition-all duration-300"
+                          style={{
+                            width: (() => {
+                              const stats = calculateDetailedAccuracyStats(
+                                annotations.patient,
+                                modelData,
+                                "patient"
+                              );
+                              if (!stats?.physicalExam.total) return "0%";
+                              return `${
+                                (stats.physicalExam.correct /
+                                  stats.physicalExam.total) *
+                                100
+                              }%`;
+                            })(),
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Looking at other devices */}
+                    <div>
+                      <div className="flex justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-700">
+                          Looking at other devices
+                        </span>
+                        <span className="text-sm font-medium text-gray-700">
+                          {(() => {
+                            const stats = calculateDetailedAccuracyStats(
+                              annotations.patient,
+                              modelData,
+                              "patient"
+                            );
+                            if (!stats?.otherDevices.total) return "0%";
+                            return `${(
+                              (stats.otherDevices.correct /
+                                stats.otherDevices.total) *
+                              100
+                            ).toFixed(1)}%`;
+                          })()}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div
+                          className="bg-orange-500 h-2.5 rounded-full transition-all duration-300"
+                          style={{
+                            width: (() => {
+                              const stats = calculateDetailedAccuracyStats(
+                                annotations.patient,
+                                modelData,
+                                "patient"
+                              );
+                              if (!stats?.otherDevices.total) return "0%";
+                              return `${
+                                (stats.otherDevices.correct /
+                                  stats.otherDevices.total) *
+                                100
+                              }%`;
+                            })(),
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+
+                    {/* Looking Elsewhere */}
+                    <div>
+                      <div className="flex justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-700">
+                          Looking Elsewhere
+                        </span>
+                        <span className="text-sm font-medium text-gray-700">
+                          {(() => {
+                            const stats = calculateDetailedAccuracyStats(
+                              annotations.patient,
+                              modelData,
+                              "patient"
+                            );
+                            if (!stats?.elsewhere.total) return "0%";
+                            return `${(
+                              (stats.elsewhere.correct /
+                                stats.elsewhere.total) *
+                              100
+                            ).toFixed(1)}%`;
+                          })()}
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div
+                          className="bg-gray-400 h-2.5 rounded-full transition-all duration-300"
+                          style={{
+                            width: (() => {
+                              const stats = calculateDetailedAccuracyStats(
+                                annotations.patient,
+                                modelData,
+                                "patient"
+                              );
+                              if (!stats?.elsewhere.total) return "0%";
+                              return `${
+                                (stats.elsewhere.correct /
+                                  stats.elsewhere.total) *
                                 100
                               }%`;
                             })(),
