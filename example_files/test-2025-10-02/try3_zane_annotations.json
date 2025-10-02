@@ -1,0 +1,46 @@
+[
+  {
+    "videoFile": "try3.mov",
+    "annotatorName": "zane",
+    "videoTitle": "try3.mov"
+  },
+  {
+    "manualAnnotations": {
+      "rightPersonGaze": [
+        {
+          "startFrame": 200,
+          "endFrame": 200
+        }
+      ],
+      "rightPersonScreen": [
+        {
+          "startFrame": 400,
+          "endFrame": 400
+        }
+      ],
+      "rightPersonElsewhere": [
+        {
+          "startFrame": 600,
+          "endFrame": 600
+        }
+      ],
+      "leftPersonGaze": [],
+      "leftPersonScreen": [
+        {
+          "startFrame": 200,
+          "endFrame": 200
+        }
+      ],
+      "leftPersonElsewhere": [
+        {
+          "startFrame": 400,
+          "endFrame": 400
+        }
+      ]
+    },
+    "videoInfo": {
+      "totalFrames": 1243,
+      "frameInterval": 200
+    }
+  }
+]

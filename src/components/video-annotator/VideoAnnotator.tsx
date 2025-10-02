@@ -190,22 +190,30 @@ const VideoAnnotator = () => {
     // Process doctor gaze annotations
     const doctorPatientGazeRanges = [];
     const doctorScreenGazeRanges = [];
+    const doctorPhysicalExamRanges = [];
+    const doctorOtherDevicesRanges = [];
     const doctorElsewhereGazeRanges = [];
     // NOTE: Frames marked as "0" (no interaction) are intentionally NOT converted to ranges
     // They exist in the annotations object but don't appear in the JSON export
     
     // Process patient gaze annotations
     const patientDoctorGazeRanges = [];
-    const patientScreenGazeRanges = []; // New array for patient looking at screen
+    const patientScreenGazeRanges = [];
+    const patientPhysicalExamRanges = [];
+    const patientOtherDevicesRanges = [];
     const patientElsewhereGazeRanges = [];
     // NOTE: Frames marked as "0" (no interaction) are intentionally NOT converted to ranges
     
     // Temporary arrays to store continuous ranges of frames
     let currentPatientRange = null;
     let currentScreenRange = null;
+    let currentPhysicalExamRange = null;
+    let currentOtherDevicesRange = null;
     let currentDoctorElsewhereRange = null;
     let currentPatientDoctorRange = null;
-    let currentPatientScreenRange = null; // New temporary variable for patient screen
+    let currentPatientScreenRange = null;
+    let currentPatientPhysicalExamRange = null;
+    let currentPatientOtherDevicesRange = null;
     let currentPatientElsewhereRange = null;
     
     // Sort frames numerically
@@ -227,6 +235,14 @@ const VideoAnnotator = () => {
         if (currentScreenRange) {
           doctorScreenGazeRanges.push(currentScreenRange);
           currentScreenRange = null;
+        }
+        if (currentPhysicalExamRange) {
+          doctorPhysicalExamRanges.push(currentPhysicalExamRange);
+          currentPhysicalExamRange = null;
+        }
+        if (currentOtherDevicesRange) {
+          doctorOtherDevicesRanges.push(currentOtherDevicesRange);
+          currentOtherDevicesRange = null;
         }
         if (currentDoctorElsewhereRange) {
           doctorElsewhereGazeRanges.push(currentDoctorElsewhereRange);
@@ -253,6 +269,14 @@ const VideoAnnotator = () => {
           doctorScreenGazeRanges.push(currentScreenRange);
           currentScreenRange = null;
         }
+        if (currentPhysicalExamRange) {
+          doctorPhysicalExamRanges.push(currentPhysicalExamRange);
+          currentPhysicalExamRange = null;
+        }
+        if (currentOtherDevicesRange) {
+          doctorOtherDevicesRanges.push(currentOtherDevicesRange);
+          currentOtherDevicesRange = null;
+        }
         if (currentDoctorElsewhereRange) {
           doctorElsewhereGazeRanges.push(currentDoctorElsewhereRange);
           currentDoctorElsewhereRange = null;
@@ -276,13 +300,83 @@ const VideoAnnotator = () => {
           doctorPatientGazeRanges.push(currentPatientRange);
           currentPatientRange = null;
         }
+        if (currentPhysicalExamRange) {
+          doctorPhysicalExamRanges.push(currentPhysicalExamRange);
+          currentPhysicalExamRange = null;
+        }
+        if (currentOtherDevicesRange) {
+          doctorOtherDevicesRanges.push(currentOtherDevicesRange);
+          currentOtherDevicesRange = null;
+        }
         if (currentDoctorElsewhereRange) {
           doctorElsewhereGazeRanges.push(currentDoctorElsewhereRange);
           currentDoctorElsewhereRange = null;
         }
       }
-      // Process doctor looking elsewhere (value 3)
+      // Process doctor physical exam (value 3)
       else if (value === 3) {
+        if (!currentPhysicalExamRange) {
+          currentPhysicalExamRange = { startFrame: frame, endFrame: frame };
+        } else if (frame === currentPhysicalExamRange.endFrame + 1) {
+          // Extend the range if frames are consecutive
+          currentPhysicalExamRange.endFrame = frame;
+        } else {
+          // Save the current range and start a new one
+          doctorPhysicalExamRanges.push(currentPhysicalExamRange);
+          currentPhysicalExamRange = { startFrame: frame, endFrame: frame };
+        }
+        
+        // End other ranges if active
+        if (currentPatientRange) {
+          doctorPatientGazeRanges.push(currentPatientRange);
+          currentPatientRange = null;
+        }
+        if (currentScreenRange) {
+          doctorScreenGazeRanges.push(currentScreenRange);
+          currentScreenRange = null;
+        }
+        if (currentOtherDevicesRange) {
+          doctorOtherDevicesRanges.push(currentOtherDevicesRange);
+          currentOtherDevicesRange = null;
+        }
+        if (currentDoctorElsewhereRange) {
+          doctorElsewhereGazeRanges.push(currentDoctorElsewhereRange);
+          currentDoctorElsewhereRange = null;
+        }
+      }
+      // Process doctor looking at other devices (value 4)
+      else if (value === 4) {
+        if (!currentOtherDevicesRange) {
+          currentOtherDevicesRange = { startFrame: frame, endFrame: frame };
+        } else if (frame === currentOtherDevicesRange.endFrame + 1) {
+          // Extend the range if frames are consecutive
+          currentOtherDevicesRange.endFrame = frame;
+        } else {
+          // Save the current range and start a new one
+          doctorOtherDevicesRanges.push(currentOtherDevicesRange);
+          currentOtherDevicesRange = { startFrame: frame, endFrame: frame };
+        }
+        
+        // End other ranges if active
+        if (currentPatientRange) {
+          doctorPatientGazeRanges.push(currentPatientRange);
+          currentPatientRange = null;
+        }
+        if (currentScreenRange) {
+          doctorScreenGazeRanges.push(currentScreenRange);
+          currentScreenRange = null;
+        }
+        if (currentPhysicalExamRange) {
+          doctorPhysicalExamRanges.push(currentPhysicalExamRange);
+          currentPhysicalExamRange = null;
+        }
+        if (currentDoctorElsewhereRange) {
+          doctorElsewhereGazeRanges.push(currentDoctorElsewhereRange);
+          currentDoctorElsewhereRange = null;
+        }
+      }
+      // Process doctor looking elsewhere (value 5)
+      else if (value === 5) {
         if (!currentDoctorElsewhereRange) {
           currentDoctorElsewhereRange = { startFrame: frame, endFrame: frame };
         } else if (frame === currentDoctorElsewhereRange.endFrame + 1) {
@@ -303,12 +397,22 @@ const VideoAnnotator = () => {
           doctorScreenGazeRanges.push(currentScreenRange);
           currentScreenRange = null;
         }
+        if (currentPhysicalExamRange) {
+          doctorPhysicalExamRanges.push(currentPhysicalExamRange);
+          currentPhysicalExamRange = null;
+        }
+        if (currentOtherDevicesRange) {
+          doctorOtherDevicesRanges.push(currentOtherDevicesRange);
+          currentOtherDevicesRange = null;
+        }
       }
     });
     
     // Add any remaining doctor ranges
     if (currentPatientRange) doctorPatientGazeRanges.push(currentPatientRange);
     if (currentScreenRange) doctorScreenGazeRanges.push(currentScreenRange);
+    if (currentPhysicalExamRange) doctorPhysicalExamRanges.push(currentPhysicalExamRange);
+    if (currentOtherDevicesRange) doctorOtherDevicesRanges.push(currentOtherDevicesRange);
     if (currentDoctorElsewhereRange) doctorElsewhereGazeRanges.push(currentDoctorElsewhereRange);
     
     // Sort frames numerically for patients
@@ -331,6 +435,14 @@ const VideoAnnotator = () => {
           patientScreenGazeRanges.push(currentPatientScreenRange);
           currentPatientScreenRange = null;
         }
+        if (currentPatientPhysicalExamRange) {
+          patientPhysicalExamRanges.push(currentPatientPhysicalExamRange);
+          currentPatientPhysicalExamRange = null;
+        }
+        if (currentPatientOtherDevicesRange) {
+          patientOtherDevicesRanges.push(currentPatientOtherDevicesRange);
+          currentPatientOtherDevicesRange = null;
+        }
         if (currentPatientElsewhereRange) {
           patientElsewhereGazeRanges.push(currentPatientElsewhereRange);
           currentPatientElsewhereRange = null;
@@ -338,8 +450,8 @@ const VideoAnnotator = () => {
         return; // Skip processing this frame for ranges
       }
       
-      // Process patient looking at doctor (value 4)
-      if (value === 4) {
+      // Process patient looking at doctor (value 5)
+      if (value === 5) {
         if (!currentPatientDoctorRange) {
           currentPatientDoctorRange = { startFrame: frame, endFrame: frame };
         } else if (frame === currentPatientDoctorRange.endFrame + 1) {
@@ -352,17 +464,25 @@ const VideoAnnotator = () => {
         }
         
         // End other ranges if active
-        if (currentPatientElsewhereRange) {
-          patientElsewhereGazeRanges.push(currentPatientElsewhereRange);
-          currentPatientElsewhereRange = null;
-        }
         if (currentPatientScreenRange) {
           patientScreenGazeRanges.push(currentPatientScreenRange);
           currentPatientScreenRange = null;
         }
+        if (currentPatientPhysicalExamRange) {
+          patientPhysicalExamRanges.push(currentPatientPhysicalExamRange);
+          currentPatientPhysicalExamRange = null;
+        }
+        if (currentPatientOtherDevicesRange) {
+          patientOtherDevicesRanges.push(currentPatientOtherDevicesRange);
+          currentPatientOtherDevicesRange = null;
+        }
+        if (currentPatientElsewhereRange) {
+          patientElsewhereGazeRanges.push(currentPatientElsewhereRange);
+          currentPatientElsewhereRange = null;
+        }
       }
-      // Process patient looking at screen (value 5) - UPDATED
-      else if (value === 5) {
+      // Process patient looking at screen (value 6)
+      else if (value === 6) {
         if (!currentPatientScreenRange) {
           currentPatientScreenRange = { startFrame: frame, endFrame: frame };
         } else if (frame === currentPatientScreenRange.endFrame + 1) {
@@ -379,13 +499,83 @@ const VideoAnnotator = () => {
           patientDoctorGazeRanges.push(currentPatientDoctorRange);
           currentPatientDoctorRange = null;
         }
+        if (currentPatientPhysicalExamRange) {
+          patientPhysicalExamRanges.push(currentPatientPhysicalExamRange);
+          currentPatientPhysicalExamRange = null;
+        }
+        if (currentPatientOtherDevicesRange) {
+          patientOtherDevicesRanges.push(currentPatientOtherDevicesRange);
+          currentPatientOtherDevicesRange = null;
+        }
         if (currentPatientElsewhereRange) {
           patientElsewhereGazeRanges.push(currentPatientElsewhereRange);
           currentPatientElsewhereRange = null;
         }
       }
-      // Process patient looking elsewhere (value 6) - UPDATED
-      else if (value === 6) {
+      // Process patient physical exam (value 7)
+      else if (value === 7) {
+        if (!currentPatientPhysicalExamRange) {
+          currentPatientPhysicalExamRange = { startFrame: frame, endFrame: frame };
+        } else if (frame === currentPatientPhysicalExamRange.endFrame + 1) {
+          // Extend the range if frames are consecutive
+          currentPatientPhysicalExamRange.endFrame = frame;
+        } else {
+          // Save the current range and start a new one
+          patientPhysicalExamRanges.push(currentPatientPhysicalExamRange);
+          currentPatientPhysicalExamRange = { startFrame: frame, endFrame: frame };
+        }
+        
+        // End other ranges if active
+        if (currentPatientDoctorRange) {
+          patientDoctorGazeRanges.push(currentPatientDoctorRange);
+          currentPatientDoctorRange = null;
+        }
+        if (currentPatientScreenRange) {
+          patientScreenGazeRanges.push(currentPatientScreenRange);
+          currentPatientScreenRange = null;
+        }
+        if (currentPatientOtherDevicesRange) {
+          patientOtherDevicesRanges.push(currentPatientOtherDevicesRange);
+          currentPatientOtherDevicesRange = null;
+        }
+        if (currentPatientElsewhereRange) {
+          patientElsewhereGazeRanges.push(currentPatientElsewhereRange);
+          currentPatientElsewhereRange = null;
+        }
+      }
+      // Process patient looking at other devices (value 8)
+      else if (value === 8) {
+        if (!currentPatientOtherDevicesRange) {
+          currentPatientOtherDevicesRange = { startFrame: frame, endFrame: frame };
+        } else if (frame === currentPatientOtherDevicesRange.endFrame + 1) {
+          // Extend the range if frames are consecutive
+          currentPatientOtherDevicesRange.endFrame = frame;
+        } else {
+          // Save the current range and start a new one
+          patientOtherDevicesRanges.push(currentPatientOtherDevicesRange);
+          currentPatientOtherDevicesRange = { startFrame: frame, endFrame: frame };
+        }
+        
+        // End other ranges if active
+        if (currentPatientDoctorRange) {
+          patientDoctorGazeRanges.push(currentPatientDoctorRange);
+          currentPatientDoctorRange = null;
+        }
+        if (currentPatientScreenRange) {
+          patientScreenGazeRanges.push(currentPatientScreenRange);
+          currentPatientScreenRange = null;
+        }
+        if (currentPatientPhysicalExamRange) {
+          patientPhysicalExamRanges.push(currentPatientPhysicalExamRange);
+          currentPatientPhysicalExamRange = null;
+        }
+        if (currentPatientElsewhereRange) {
+          patientElsewhereGazeRanges.push(currentPatientElsewhereRange);
+          currentPatientElsewhereRange = null;
+        }
+      }
+      // Process patient looking elsewhere (value 9)
+      else if (value === 9) {
         if (!currentPatientElsewhereRange) {
           currentPatientElsewhereRange = { startFrame: frame, endFrame: frame };
         } else if (frame === currentPatientElsewhereRange.endFrame + 1) {
@@ -406,12 +596,22 @@ const VideoAnnotator = () => {
           patientScreenGazeRanges.push(currentPatientScreenRange);
           currentPatientScreenRange = null;
         }
+        if (currentPatientPhysicalExamRange) {
+          patientPhysicalExamRanges.push(currentPatientPhysicalExamRange);
+          currentPatientPhysicalExamRange = null;
+        }
+        if (currentPatientOtherDevicesRange) {
+          patientOtherDevicesRanges.push(currentPatientOtherDevicesRange);
+          currentPatientOtherDevicesRange = null;
+        }
       }
     });
     
     // Add any remaining patient ranges
     if (currentPatientDoctorRange) patientDoctorGazeRanges.push(currentPatientDoctorRange);
     if (currentPatientScreenRange) patientScreenGazeRanges.push(currentPatientScreenRange);
+    if (currentPatientPhysicalExamRange) patientPhysicalExamRanges.push(currentPatientPhysicalExamRange);
+    if (currentPatientOtherDevicesRange) patientOtherDevicesRanges.push(currentPatientOtherDevicesRange);
     if (currentPatientElsewhereRange) patientElsewhereGazeRanges.push(currentPatientElsewhereRange);
     
     // Format the final output to match the model data structure
@@ -424,9 +624,13 @@ const VideoAnnotator = () => {
           // Following the naming convention in the model data
           rightPersonGaze: doctorPatientGazeRanges,
           rightPersonScreen: doctorScreenGazeRanges,
+          rightPersonPhysicalExam: doctorPhysicalExamRanges,
+          rightPersonOtherDevices: doctorOtherDevicesRanges,
           rightPersonElsewhere: doctorElsewhereGazeRanges,
           leftPersonGaze: patientDoctorGazeRanges,
-          leftPersonScreen: patientScreenGazeRanges, // New field for patient screen gaze
+          leftPersonScreen: patientScreenGazeRanges,
+          leftPersonPhysicalExam: patientPhysicalExamRanges,
+          leftPersonOtherDevices: patientOtherDevicesRanges,
           leftPersonElsewhere: patientElsewhereGazeRanges
         }
       }
@@ -546,11 +750,29 @@ const VideoAnnotator = () => {
           });
         }
         
+        // Process doctor physical exam ranges
+        if (manualAnnotations.rightPersonPhysicalExam) {
+          manualAnnotations.rightPersonPhysicalExam.forEach(range => {
+            for (let frame = range.startFrame; frame <= range.endFrame; frame++) {
+              doctorAnnotations[frame] = 3; // doctor physical exam
+            }
+          });
+        }
+        
+        // Process doctor looking at other devices ranges
+        if (manualAnnotations.rightPersonOtherDevices) {
+          manualAnnotations.rightPersonOtherDevices.forEach(range => {
+            for (let frame = range.startFrame; frame <= range.endFrame; frame++) {
+              doctorAnnotations[frame] = 4; // doctor looking at other devices
+            }
+          });
+        }
+        
         // Process doctor looking elsewhere ranges
         if (manualAnnotations.rightPersonElsewhere) {
           manualAnnotations.rightPersonElsewhere.forEach(range => {
             for (let frame = range.startFrame; frame <= range.endFrame; frame++) {
-              doctorAnnotations[frame] = 3; // doctor looking elsewhere
+              doctorAnnotations[frame] = 5; // doctor looking elsewhere
             }
           });
         }
@@ -559,25 +781,43 @@ const VideoAnnotator = () => {
         if (manualAnnotations.leftPersonGaze) {
           manualAnnotations.leftPersonGaze.forEach(range => {
             for (let frame = range.startFrame; frame <= range.endFrame; frame++) {
-              patientAnnotations[frame] = 4; // patient looking at doctor
+              patientAnnotations[frame] = 5; // patient looking at doctor
             }
           });
         }
         
-        // Process patient looking at screen ranges - UPDATED key value
+        // Process patient looking at screen ranges
         if (manualAnnotations.leftPersonScreen) {
           manualAnnotations.leftPersonScreen.forEach(range => {
             for (let frame = range.startFrame; frame <= range.endFrame; frame++) {
-              patientAnnotations[frame] = 5; // patient looking at screen (changed from 6 to 5)
+              patientAnnotations[frame] = 6; // patient looking at screen
             }
           });
         }
         
-        // Process patient looking elsewhere ranges - UPDATED key value
+        // Process patient physical exam ranges
+        if (manualAnnotations.leftPersonPhysicalExam) {
+          manualAnnotations.leftPersonPhysicalExam.forEach(range => {
+            for (let frame = range.startFrame; frame <= range.endFrame; frame++) {
+              patientAnnotations[frame] = 7; // patient physical exam
+            }
+          });
+        }
+        
+        // Process patient looking at other devices ranges
+        if (manualAnnotations.leftPersonOtherDevices) {
+          manualAnnotations.leftPersonOtherDevices.forEach(range => {
+            for (let frame = range.startFrame; frame <= range.endFrame; frame++) {
+              patientAnnotations[frame] = 8; // patient looking at other devices
+            }
+          });
+        }
+        
+        // Process patient looking elsewhere ranges
         if (manualAnnotations.leftPersonElsewhere) {
           manualAnnotations.leftPersonElsewhere.forEach(range => {
             for (let frame = range.startFrame; frame <= range.endFrame; frame++) {
-              patientAnnotations[frame] = 6; // patient looking elsewhere (changed from 5 to 6)
+              patientAnnotations[frame] = 9; // patient looking elsewhere
             }
           });
         }

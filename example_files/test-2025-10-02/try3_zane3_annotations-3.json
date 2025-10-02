@@ -1,0 +1,83 @@
+[
+  {
+    "videoFile": "try3.mov",
+    "annotatorName": "zane3",
+    "videoTitle": "try3.mov"
+  },
+  {
+    "manualAnnotations": {
+      "rightPersonGaze": [],
+      "rightPersonScreen": [],
+      "rightPersonPhysicalExam": [],
+      "rightPersonOtherDevices": [
+        {
+          "startFrame": 0,
+          "endFrame": 0
+        },
+        {
+          "startFrame": 200,
+          "endFrame": 200
+        },
+        {
+          "startFrame": 400,
+          "endFrame": 400
+        },
+        {
+          "startFrame": 600,
+          "endFrame": 600
+        },
+        {
+          "startFrame": 800,
+          "endFrame": 800
+        },
+        {
+          "startFrame": 1000,
+          "endFrame": 1000
+        },
+        {
+          "startFrame": 1200,
+          "endFrame": 1200
+        }
+      ],
+      "rightPersonElsewhere": [],
+      "leftPersonGaze": [],
+      "leftPersonScreen": [],
+      "leftPersonPhysicalExam": [],
+      "leftPersonOtherDevices": [
+        {
+          "startFrame": 0,
+          "endFrame": 0
+        },
+        {
+          "startFrame": 200,
+          "endFrame": 200
+        },
+        {
+          "startFrame": 400,
+          "endFrame": 400
+        },
+        {
+          "startFrame": 600,
+          "endFrame": 600
+        },
+        {
+          "startFrame": 800,
+          "endFrame": 800
+        },
+        {
+          "startFrame": 1000,
+          "endFrame": 1000
+        },
+        {
+          "startFrame": 1200,
+          "endFrame": 1200
+        }
+      ],
+      "leftPersonElsewhere": []
+    },
+    "videoInfo": {
+      "totalFrames": 1243,
+      "frameInterval": 200
+    }
+  }
+]

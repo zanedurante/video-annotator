@@ -41,8 +41,10 @@ const TimelineVisualization = ({
     
     if (isAI) {
       // For AI predictions, draw continuous ranges
-      const { leftPersonGaze, leftPersonScreen, rightPersonGaze, rightPersonScreen } = 
-        modelData?.[1]?.manualAnnotations || {};
+      const { 
+        leftPersonGaze, leftPersonScreen, leftPersonPhysicalExam, leftPersonOtherDevices, leftPersonElsewhere,
+        rightPersonGaze, rightPersonScreen, rightPersonPhysicalExam, rightPersonOtherDevices, rightPersonElsewhere 
+      } = modelData?.[1]?.manualAnnotations || {};
       
       // Set transparency for AI predictions
       ctx.globalAlpha = 0.8;
@@ -69,10 +71,43 @@ const TimelineVisualization = ({
             ctx.fillRect(startX, 0, barWidth, height);
           });
         }
+        
+        // Process physical exam ranges (doctor physical exam)
+        if (rightPersonPhysicalExam) {
+          ctx.fillStyle = '#3b82f6'; // Blue
+          rightPersonPhysicalExam.forEach(range => {
+            const startX = (range.startFrame / totalFrames) * width;
+            const endX = (range.endFrame / totalFrames) * width;
+            const barWidth = Math.max(1, endX - startX); // Ensure at least 1px width
+            ctx.fillRect(startX, 0, barWidth, height);
+          });
+        }
+        
+        // Process other devices ranges (doctor looking at other devices)
+        if (rightPersonOtherDevices) {
+          ctx.fillStyle = '#f59e0b'; // Orange
+          rightPersonOtherDevices.forEach(range => {
+            const startX = (range.startFrame / totalFrames) * width;
+            const endX = (range.endFrame / totalFrames) * width;
+            const barWidth = Math.max(1, endX - startX); // Ensure at least 1px width
+            ctx.fillRect(startX, 0, barWidth, height);
+          });
+        }
+        
+        // Process elsewhere ranges (doctor looking elsewhere)
+        if (rightPersonElsewhere) {
+          ctx.fillStyle = '#9ca3af'; // Gray
+          rightPersonElsewhere.forEach(range => {
+            const startX = (range.startFrame / totalFrames) * width;
+            const endX = (range.endFrame / totalFrames) * width;
+            const barWidth = Math.max(1, endX - startX); // Ensure at least 1px width
+            ctx.fillRect(startX, 0, barWidth, height);
+          });
+        }
       } else {
         // Process doctor gaze ranges (patient looking at doctor)
         if (leftPersonGaze) {
-          ctx.fillStyle = '#1bd018'; // Green - Same as doctor looking at screen
+          ctx.fillStyle = '#1bd018'; // Green
           leftPersonGaze.forEach(range => {
             const startX = (range.startFrame / totalFrames) * width;
             const endX = (range.endFrame / totalFrames) * width;
@@ -81,10 +116,43 @@ const TimelineVisualization = ({
           });
         }
         
-        // Process screen gaze ranges (patient looking at screen) - NEW
+        // Process screen gaze ranges (patient looking at screen)
         if (leftPersonScreen) {
-          ctx.fillStyle = '#ef4444'; // Red (red-500) - Same as doctor looking at patient
+          ctx.fillStyle = '#ef4444'; // Red (red-500)
           leftPersonScreen.forEach(range => {
+            const startX = (range.startFrame / totalFrames) * width;
+            const endX = (range.endFrame / totalFrames) * width;
+            const barWidth = Math.max(1, endX - startX); // Ensure at least 1px width
+            ctx.fillRect(startX, 0, barWidth, height);
+          });
+        }
+        
+        // Process physical exam ranges (patient physical exam)
+        if (leftPersonPhysicalExam) {
+          ctx.fillStyle = '#3b82f6'; // Blue
+          leftPersonPhysicalExam.forEach(range => {
+            const startX = (range.startFrame / totalFrames) * width;
+            const endX = (range.endFrame / totalFrames) * width;
+            const barWidth = Math.max(1, endX - startX); // Ensure at least 1px width
+            ctx.fillRect(startX, 0, barWidth, height);
+          });
+        }
+        
+        // Process other devices ranges (patient looking at other devices)
+        if (leftPersonOtherDevices) {
+          ctx.fillStyle = '#f59e0b'; // Orange
+          leftPersonOtherDevices.forEach(range => {
+            const startX = (range.startFrame / totalFrames) * width;
+            const endX = (range.endFrame / totalFrames) * width;
+            const barWidth = Math.max(1, endX - startX); // Ensure at least 1px width
+            ctx.fillRect(startX, 0, barWidth, height);
+          });
+        }
+        
+        // Process elsewhere ranges (patient looking elsewhere)
+        if (leftPersonElsewhere) {
+          ctx.fillStyle = '#9ca3af'; // Gray
+          leftPersonElsewhere.forEach(range => {
             const startX = (range.startFrame / totalFrames) * width;
             const endX = (range.endFrame / totalFrames) * width;
             const barWidth = Math.max(1, endX - startX); // Ensure at least 1px width

@@ -105,8 +105,8 @@ const KappaAgreementAnalysis = () => {
     const annotations = firstFile.data[1]?.manualAnnotations;
     if (annotations) {
       let maxFrame = 0;
-      ['rightPersonGaze', 'rightPersonScreen', 'rightPersonElsewhere', 
-       'leftPersonGaze', 'leftPersonScreen', 'leftPersonElsewhere'].forEach(type => {
+      ['rightPersonGaze', 'rightPersonScreen', 'rightPersonPhysicalExam', 'rightPersonOtherDevices', 'rightPersonElsewhere', 
+       'leftPersonGaze', 'leftPersonScreen', 'leftPersonPhysicalExam', 'leftPersonOtherDevices', 'leftPersonElsewhere'].forEach(type => {
         if (annotations[type]) {
           annotations[type].forEach(range => {
             maxFrame = Math.max(maxFrame, range.endFrame);
@@ -160,6 +160,26 @@ const KappaAgreementAnalysis = () => {
         });
       }
       
+      if (annotations.rightPersonPhysicalExam) {
+        ctx.fillStyle = '#3b82f6'; // Blue
+        annotations.rightPersonPhysicalExam.forEach(range => {
+          const startX = (range.startFrame / totalFrames) * width;
+          const endX = (range.endFrame / totalFrames) * width;
+          const barWidth = Math.max(1, endX - startX);
+          ctx.fillRect(startX, 0, barWidth, height);
+        });
+      }
+      
+      if (annotations.rightPersonOtherDevices) {
+        ctx.fillStyle = '#f59e0b'; // Orange
+        annotations.rightPersonOtherDevices.forEach(range => {
+          const startX = (range.startFrame / totalFrames) * width;
+          const endX = (range.endFrame / totalFrames) * width;
+          const barWidth = Math.max(1, endX - startX);
+          ctx.fillRect(startX, 0, barWidth, height);
+        });
+      }
+      
       if (annotations.rightPersonElsewhere) {
         ctx.fillStyle = '#6b7280'; // Gray
         annotations.rightPersonElsewhere.forEach(range => {
@@ -184,6 +204,26 @@ const KappaAgreementAnalysis = () => {
       if (annotations.leftPersonScreen) {
         ctx.fillStyle = '#ef4444'; // Red
         annotations.leftPersonScreen.forEach(range => {
+          const startX = (range.startFrame / totalFrames) * width;
+          const endX = (range.endFrame / totalFrames) * width;
+          const barWidth = Math.max(1, endX - startX);
+          ctx.fillRect(startX, 0, barWidth, height);
+        });
+      }
+      
+      if (annotations.leftPersonPhysicalExam) {
+        ctx.fillStyle = '#3b82f6'; // Blue
+        annotations.leftPersonPhysicalExam.forEach(range => {
+          const startX = (range.startFrame / totalFrames) * width;
+          const endX = (range.endFrame / totalFrames) * width;
+          const barWidth = Math.max(1, endX - startX);
+          ctx.fillRect(startX, 0, barWidth, height);
+        });
+      }
+      
+      if (annotations.leftPersonOtherDevices) {
+        ctx.fillStyle = '#f59e0b'; // Orange
+        annotations.leftPersonOtherDevices.forEach(range => {
           const startX = (range.startFrame / totalFrames) * width;
           const endX = (range.endFrame / totalFrames) * width;
           const barWidth = Math.max(1, endX - startX);
@@ -261,8 +301,8 @@ const KappaAgreementAnalysis = () => {
       if (!data) return;
       
       // Collect frames from all annotation types for this file
-      ['rightPersonGaze', 'rightPersonScreen', 'rightPersonElsewhere', 
-       'leftPersonGaze', 'leftPersonScreen', 'leftPersonElsewhere'].forEach(type => {
+      ['rightPersonGaze', 'rightPersonScreen', 'rightPersonPhysicalExam', 'rightPersonOtherDevices', 'rightPersonElsewhere', 
+       'leftPersonGaze', 'leftPersonScreen', 'leftPersonPhysicalExam', 'leftPersonOtherDevices', 'leftPersonElsewhere'].forEach(type => {
         if (data[type]) {
           data[type].forEach(range => {
             for (let frame = range.startFrame; frame <= range.endFrame; frame++) {
@@ -292,8 +332,12 @@ const KappaAgreementAnalysis = () => {
           doctorList.push(1); // Looking at patient
         } else if (data.rightPersonScreen?.some(range => frame >= range.startFrame && frame <= range.endFrame)) {
           doctorList.push(2); // Looking at screen
+        } else if (data.rightPersonPhysicalExam?.some(range => frame >= range.startFrame && frame <= range.endFrame)) {
+          doctorList.push(3); // Physical exam
+        } else if (data.rightPersonOtherDevices?.some(range => frame >= range.startFrame && frame <= range.endFrame)) {
+          doctorList.push(4); // Looking at other devices
         } else if (data.rightPersonElsewhere?.some(range => frame >= range.startFrame && frame <= range.endFrame)) {
-          doctorList.push(5); // Looking elsewhere (moved to 5)
+          doctorList.push(5); // Looking elsewhere
         } else {
           doctorList.push(0); // Frame not annotated by this annotator
         }
@@ -305,11 +349,15 @@ const KappaAgreementAnalysis = () => {
         if (!data) {
           patientList.push(0); // No data for this annotator
         } else if (data.leftPersonGaze?.some(range => frame >= range.startFrame && frame <= range.endFrame)) {
-          patientList.push(5); // Looking at doctor (moved to 5)
+          patientList.push(5); // Looking at doctor
         } else if (data.leftPersonScreen?.some(range => frame >= range.startFrame && frame <= range.endFrame)) {
-          patientList.push(6); // Looking at screen (moved to 6)
+          patientList.push(6); // Looking at screen
+        } else if (data.leftPersonPhysicalExam?.some(range => frame >= range.startFrame && frame <= range.endFrame)) {
+          patientList.push(7); // Physical exam
+        } else if (data.leftPersonOtherDevices?.some(range => frame >= range.startFrame && frame <= range.endFrame)) {
+          patientList.push(8); // Looking at other devices
         } else if (data.leftPersonElsewhere?.some(range => frame >= range.startFrame && frame <= range.endFrame)) {
-          patientList.push(9); // Looking elsewhere (moved to 9)
+          patientList.push(9); // Looking elsewhere
         } else {
           patientList.push(0); // Frame not annotated by this annotator
         }
@@ -326,8 +374,8 @@ const KappaAgreementAnalysis = () => {
         if (!data) return true; // This annotator has no data
         
         // Check if this frame is annotated by this annotator
-        const isAnnotated = ['rightPersonGaze', 'rightPersonScreen', 'rightPersonElsewhere', 
-                            'leftPersonGaze', 'leftPersonScreen', 'leftPersonElsewhere'].some(type => {
+        const isAnnotated = ['rightPersonGaze', 'rightPersonScreen', 'rightPersonPhysicalExam', 'rightPersonOtherDevices', 'rightPersonElsewhere', 
+                            'leftPersonGaze', 'leftPersonScreen', 'leftPersonPhysicalExam', 'leftPersonOtherDevices', 'leftPersonElsewhere'].some(type => {
           return data[type]?.some(range => frame >= range.startFrame && frame <= range.endFrame);
         });
         
@@ -702,7 +750,7 @@ const KappaAgreementAnalysis = () => {
                 <span>Looking Elsewhere</span>
               </div>
               <div className="flex items-center">
-                <span className="w-4 h-4 bg-gray-300 rounded mr-1"></span>
+                <span className="w-4 h-4 bg-white border border-gray-300 rounded mr-1"></span>
                 <span>No Annotation</span>
               </div>
             </div>
