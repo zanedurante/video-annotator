@@ -368,6 +368,8 @@ const KappaAgreementAnalysis = () => {
     });
     
     // Count frames that are missing annotations from some annotators
+    // Store indices of frames that are missing annotations
+    const framesWithMissingAnnotationsIndices = [];
     masterFrameList.forEach(frame => {
       const frameHasMissingAnnotations = files.some(file => {
         const data = file.data[1]?.manualAnnotations;
@@ -384,10 +386,47 @@ const KappaAgreementAnalysis = () => {
       
       if (frameHasMissingAnnotations) {
         framesWithMissingAnnotations++;
+        framesWithMissingAnnotationsIndices.push(frame);
       }
     });
+
+    // Remove the frames with missing annotations from the lists 
+    // TODO: Fix this, (currently only removing 1 frame from each list)
+
+    console.log("Length of doctorLists before removing frames with missing annotations: ", doctorLists[0].length);
+    console.log("Length of patientLists before removing frames with missing annotations: ", patientLists[0].length);
+
+    // For each frame with missing annotations, find the corresponding index in the list from the master frame list
     
-    return { doctorLists, patientLists, framesWithMissingAnnotations };
+    // Define indicesToRemove as an empty array
+    let indicesToRemove = [];
+    for (let i = 0; i < framesWithMissingAnnotationsIndices.length; i++) {
+      const frame_number = framesWithMissingAnnotationsIndices[i];
+      // Find the corresponding index in the list from the master frame list
+      const index = masterFrameList.indexOf(frame_number);
+      indicesToRemove.push(index);
+    }
+
+    // Remove the frames from the lists for each annotator and for each list
+    // Go from back to front to avoid skipping indices
+    let sortedIndicesToRemove = indicesToRemove.sort((a, b) => b - a);
+
+    for (let i = 0; i < doctorLists.length; i++) {
+      for (let j = 0; j < sortedIndicesToRemove.length; j++) {
+        const index = sortedIndicesToRemove[j];
+        doctorLists[i].splice(index, 1);
+        patientLists[i].splice(index, 1);
+      }
+    }
+
+    console.log("Length of doctorLists after removing frames with missing annotations: ", doctorLists[0].length);
+    console.log("Length of patientLists after removing frames with missing annotations: ", patientLists[0].length);
+    
+
+    console.log("Length of doctorLists after removing frames with missing annotations: ", doctorLists[0].length);
+    console.log("Length of patientLists after removing frames with missing annotations: ", patientLists[0].length);
+
+    return { doctorLists, patientLists, framesWithMissingAnnotations, framesWithMissingAnnotationsIndices };
   };
 
   // Calculate Cohen's Kappa for two raters
@@ -494,7 +533,7 @@ const KappaAgreementAnalysis = () => {
       return;
     }
 
-    const { doctorLists, patientLists, framesWithMissingAnnotations } = convertToSimpleLists(currentVideoFiles);
+    const { doctorLists, patientLists, framesWithMissingAnnotations, framesWithMissingAnnotationsIndices } = convertToSimpleLists(currentVideoFiles);
 
     console.log("=========doctorLists=========");
     console.log(doctorLists);
@@ -508,7 +547,7 @@ const KappaAgreementAnalysis = () => {
 
     // Show warning if there are frames with missing annotations
     if (framesWithMissingAnnotations > 0) {
-      setWarningMessage(`Warning: ${framesWithMissingAnnotations} frames were only annotated by one annotator in the given annotation files. To calculate Kappa, the frames were annotated as '0'.`);
+      setWarningMessage(`Warning: ${framesWithMissingAnnotations} frames were only annotated by one annotator in the given annotation files. These frames were not included in the Kappa calculation: ${framesWithMissingAnnotationsIndices.join(", ")}`);
     } else {
       setWarningMessage(null);
     }
