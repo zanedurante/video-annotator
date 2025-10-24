@@ -42,8 +42,8 @@ const TimelineVisualization = ({
     if (isAI) {
       // For AI predictions, draw continuous ranges
       const { 
-        leftPersonGaze, leftPersonScreen, leftPersonPhysicalExam, leftPersonOtherDevices, leftPersonElsewhere,
-        rightPersonGaze, rightPersonScreen, rightPersonPhysicalExam, rightPersonOtherDevices, rightPersonElsewhere 
+        leftPersonGaze, leftPersonScreen, leftPersonPhysicalExam,         leftPersonClinicalMaterials, leftPersonElsewhere,
+        rightPersonGaze, rightPersonScreen, rightPersonPhysicalExam, rightPersonClinicalMaterials, rightPersonElsewhere
       } = modelData?.[1]?.manualAnnotations || {};
       
       // Set transparency for AI predictions
@@ -83,10 +83,10 @@ const TimelineVisualization = ({
           });
         }
         
-        // Process other devices ranges (doctor looking at other devices)
-        if (rightPersonOtherDevices) {
+        // Process clinical materials ranges (doctor looking at clinical materials)
+        if (rightPersonClinicalMaterials) {
           ctx.fillStyle = '#f59e0b'; // Orange
-          rightPersonOtherDevices.forEach(range => {
+          rightPersonClinicalMaterials.forEach(range => {
             const startX = (range.startFrame / totalFrames) * width;
             const endX = (range.endFrame / totalFrames) * width;
             const barWidth = Math.max(1, endX - startX); // Ensure at least 1px width
@@ -138,10 +138,10 @@ const TimelineVisualization = ({
           });
         }
         
-        // Process other devices ranges (patient looking at other devices)
-        if (leftPersonOtherDevices) {
+        // Process clinical materials ranges (patient looking at clinical materials)
+        if (leftPersonClinicalMaterials) {
           ctx.fillStyle = '#f59e0b'; // Orange
-          leftPersonOtherDevices.forEach(range => {
+          leftPersonClinicalMaterials.forEach(range => {
             const startX = (range.startFrame / totalFrames) * width;
             const endX = (range.endFrame / totalFrames) * width;
             const barWidth = Math.max(1, endX - startX); // Ensure at least 1px width
@@ -173,14 +173,14 @@ const TimelineVisualization = ({
         annotationsByValue[1] = []; // Looking at patient
         annotationsByValue[2] = []; // Looking at screen
         annotationsByValue[3] = []; // Physical exam
-        annotationsByValue[4] = []; // Looking at other devices
+        annotationsByValue[4] = []; // Looking at clinical materials
         annotationsByValue[5] = []; // Looking elsewhere
       } else {
         // Initialize value groups for patient
         annotationsByValue[5] = []; // Looking at doctor
         annotationsByValue[6] = []; // Looking at screen
         annotationsByValue[7] = []; // Physical exam
-        annotationsByValue[8] = []; // Looking at other devices
+        annotationsByValue[8] = []; // Looking at clinical materials
         annotationsByValue[9] = []; // Looking elsewhere
       }
       
@@ -199,7 +199,7 @@ const TimelineVisualization = ({
             case 1: ctx.fillStyle = '#1bd018'; break; // Green - Looking at patient
             case 2: ctx.fillStyle = '#ef4444'; break; // Red - Looking at screen
             case 3: ctx.fillStyle = '#3b82f6'; break; // Blue - Physical exam
-            case 4: ctx.fillStyle = '#f59e0b'; break; // Orange - Looking at other devices
+            case 4: ctx.fillStyle = '#f59e0b'; break; // Orange - Looking at clinical materials
             case 5: ctx.fillStyle = '#9ca3af'; break; // Gray - Looking elsewhere
             default: ctx.fillStyle = '#9ca3af';
           }
@@ -208,7 +208,7 @@ const TimelineVisualization = ({
             case 5: ctx.fillStyle = '#1bd018'; break; // Green - Looking at doctor
             case 6: ctx.fillStyle = '#ef4444'; break; // Red - Looking at screen
             case 7: ctx.fillStyle = '#3b82f6'; break; // Blue - Physical exam
-            case 8: ctx.fillStyle = '#f59e0b'; break; // Orange - Looking at other devices
+            case 8: ctx.fillStyle = '#f59e0b'; break; // Orange - Looking at clinical materials
             case 9: ctx.fillStyle = '#9ca3af'; break; // Gray - Looking elsewhere
             default: ctx.fillStyle = '#9ca3af';
           }

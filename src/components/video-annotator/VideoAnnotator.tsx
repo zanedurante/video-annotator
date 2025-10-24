@@ -191,7 +191,7 @@ const VideoAnnotator = () => {
     const doctorPatientGazeRanges = [];
     const doctorScreenGazeRanges = [];
     const doctorPhysicalExamRanges = [];
-    const doctorOtherDevicesRanges = [];
+    const doctorClinicalMaterialsRanges = [];
     const doctorElsewhereGazeRanges = [];
     // NOTE: Frames marked as "0" (no interaction) are intentionally NOT converted to ranges
     // They exist in the annotations object but don't appear in the JSON export
@@ -200,7 +200,7 @@ const VideoAnnotator = () => {
     const patientDoctorGazeRanges = [];
     const patientScreenGazeRanges = [];
     const patientPhysicalExamRanges = [];
-    const patientOtherDevicesRanges = [];
+    const patientClinicalMaterialsRanges = [];
     const patientElsewhereGazeRanges = [];
     // NOTE: Frames marked as "0" (no interaction) are intentionally NOT converted to ranges
     
@@ -208,12 +208,12 @@ const VideoAnnotator = () => {
     let currentPatientRange = null;
     let currentScreenRange = null;
     let currentPhysicalExamRange = null;
-    let currentOtherDevicesRange = null;
+    let currentClinicalMaterialsRange = null;
     let currentDoctorElsewhereRange = null;
     let currentPatientDoctorRange = null;
     let currentPatientScreenRange = null;
     let currentPatientPhysicalExamRange = null;
-    let currentPatientOtherDevicesRange = null;
+    let currentPatientClinicalMaterialsRange = null;
     let currentPatientElsewhereRange = null;
     
     // Sort frames numerically
@@ -240,9 +240,9 @@ const VideoAnnotator = () => {
           doctorPhysicalExamRanges.push(currentPhysicalExamRange);
           currentPhysicalExamRange = null;
         }
-        if (currentOtherDevicesRange) {
-          doctorOtherDevicesRanges.push(currentOtherDevicesRange);
-          currentOtherDevicesRange = null;
+        if (currentClinicalMaterialsRange) {
+          doctorClinicalMaterialsRanges.push(currentClinicalMaterialsRange);
+          currentClinicalMaterialsRange = null;
         }
         if (currentDoctorElsewhereRange) {
           doctorElsewhereGazeRanges.push(currentDoctorElsewhereRange);
@@ -273,9 +273,9 @@ const VideoAnnotator = () => {
           doctorPhysicalExamRanges.push(currentPhysicalExamRange);
           currentPhysicalExamRange = null;
         }
-        if (currentOtherDevicesRange) {
-          doctorOtherDevicesRanges.push(currentOtherDevicesRange);
-          currentOtherDevicesRange = null;
+        if (currentClinicalMaterialsRange) {
+          doctorClinicalMaterialsRanges.push(currentClinicalMaterialsRange);
+          currentClinicalMaterialsRange = null;
         }
         if (currentDoctorElsewhereRange) {
           doctorElsewhereGazeRanges.push(currentDoctorElsewhereRange);
@@ -304,9 +304,9 @@ const VideoAnnotator = () => {
           doctorPhysicalExamRanges.push(currentPhysicalExamRange);
           currentPhysicalExamRange = null;
         }
-        if (currentOtherDevicesRange) {
-          doctorOtherDevicesRanges.push(currentOtherDevicesRange);
-          currentOtherDevicesRange = null;
+        if (currentClinicalMaterialsRange) {
+          doctorClinicalMaterialsRanges.push(currentClinicalMaterialsRange);
+          currentClinicalMaterialsRange = null;
         }
         if (currentDoctorElsewhereRange) {
           doctorElsewhereGazeRanges.push(currentDoctorElsewhereRange);
@@ -335,26 +335,26 @@ const VideoAnnotator = () => {
           doctorScreenGazeRanges.push(currentScreenRange);
           currentScreenRange = null;
         }
-        if (currentOtherDevicesRange) {
-          doctorOtherDevicesRanges.push(currentOtherDevicesRange);
-          currentOtherDevicesRange = null;
+        if (currentClinicalMaterialsRange) {
+          doctorClinicalMaterialsRanges.push(currentClinicalMaterialsRange);
+          currentClinicalMaterialsRange = null;
         }
         if (currentDoctorElsewhereRange) {
           doctorElsewhereGazeRanges.push(currentDoctorElsewhereRange);
           currentDoctorElsewhereRange = null;
         }
       }
-      // Process doctor looking at other devices (value 4)
+      // Process doctor looking at clinical materials (value 4)
       else if (value === 4) {
-        if (!currentOtherDevicesRange) {
-          currentOtherDevicesRange = { startFrame: frame, endFrame: frame };
-        } else if (frame === currentOtherDevicesRange.endFrame + 1) {
+        if (!currentClinicalMaterialsRange) {
+          currentClinicalMaterialsRange = { startFrame: frame, endFrame: frame };
+        } else if (frame === currentClinicalMaterialsRange.endFrame + 1) {
           // Extend the range if frames are consecutive
-          currentOtherDevicesRange.endFrame = frame;
+          currentClinicalMaterialsRange.endFrame = frame;
         } else {
           // Save the current range and start a new one
-          doctorOtherDevicesRanges.push(currentOtherDevicesRange);
-          currentOtherDevicesRange = { startFrame: frame, endFrame: frame };
+          doctorClinicalMaterialsRanges.push(currentClinicalMaterialsRange);
+          currentClinicalMaterialsRange = { startFrame: frame, endFrame: frame };
         }
         
         // End other ranges if active
@@ -401,9 +401,9 @@ const VideoAnnotator = () => {
           doctorPhysicalExamRanges.push(currentPhysicalExamRange);
           currentPhysicalExamRange = null;
         }
-        if (currentOtherDevicesRange) {
-          doctorOtherDevicesRanges.push(currentOtherDevicesRange);
-          currentOtherDevicesRange = null;
+        if (currentClinicalMaterialsRange) {
+          doctorClinicalMaterialsRanges.push(currentClinicalMaterialsRange);
+          currentClinicalMaterialsRange = null;
         }
       }
     });
@@ -412,7 +412,7 @@ const VideoAnnotator = () => {
     if (currentPatientRange) doctorPatientGazeRanges.push(currentPatientRange);
     if (currentScreenRange) doctorScreenGazeRanges.push(currentScreenRange);
     if (currentPhysicalExamRange) doctorPhysicalExamRanges.push(currentPhysicalExamRange);
-    if (currentOtherDevicesRange) doctorOtherDevicesRanges.push(currentOtherDevicesRange);
+    if (currentClinicalMaterialsRange) doctorClinicalMaterialsRanges.push(currentClinicalMaterialsRange);
     if (currentDoctorElsewhereRange) doctorElsewhereGazeRanges.push(currentDoctorElsewhereRange);
     
     // Sort frames numerically for patients
@@ -439,9 +439,9 @@ const VideoAnnotator = () => {
           patientPhysicalExamRanges.push(currentPatientPhysicalExamRange);
           currentPatientPhysicalExamRange = null;
         }
-        if (currentPatientOtherDevicesRange) {
-          patientOtherDevicesRanges.push(currentPatientOtherDevicesRange);
-          currentPatientOtherDevicesRange = null;
+        if (currentPatientClinicalMaterialsRange) {
+          patientClinicalMaterialsRanges.push(currentPatientClinicalMaterialsRange);
+          currentPatientClinicalMaterialsRange = null;
         }
         if (currentPatientElsewhereRange) {
           patientElsewhereGazeRanges.push(currentPatientElsewhereRange);
@@ -472,9 +472,9 @@ const VideoAnnotator = () => {
           patientPhysicalExamRanges.push(currentPatientPhysicalExamRange);
           currentPatientPhysicalExamRange = null;
         }
-        if (currentPatientOtherDevicesRange) {
-          patientOtherDevicesRanges.push(currentPatientOtherDevicesRange);
-          currentPatientOtherDevicesRange = null;
+        if (currentPatientClinicalMaterialsRange) {
+          patientClinicalMaterialsRanges.push(currentPatientClinicalMaterialsRange);
+          currentPatientClinicalMaterialsRange = null;
         }
         if (currentPatientElsewhereRange) {
           patientElsewhereGazeRanges.push(currentPatientElsewhereRange);
@@ -503,9 +503,9 @@ const VideoAnnotator = () => {
           patientPhysicalExamRanges.push(currentPatientPhysicalExamRange);
           currentPatientPhysicalExamRange = null;
         }
-        if (currentPatientOtherDevicesRange) {
-          patientOtherDevicesRanges.push(currentPatientOtherDevicesRange);
-          currentPatientOtherDevicesRange = null;
+        if (currentPatientClinicalMaterialsRange) {
+          patientClinicalMaterialsRanges.push(currentPatientClinicalMaterialsRange);
+          currentPatientClinicalMaterialsRange = null;
         }
         if (currentPatientElsewhereRange) {
           patientElsewhereGazeRanges.push(currentPatientElsewhereRange);
@@ -534,26 +534,26 @@ const VideoAnnotator = () => {
           patientScreenGazeRanges.push(currentPatientScreenRange);
           currentPatientScreenRange = null;
         }
-        if (currentPatientOtherDevicesRange) {
-          patientOtherDevicesRanges.push(currentPatientOtherDevicesRange);
-          currentPatientOtherDevicesRange = null;
+        if (currentPatientClinicalMaterialsRange) {
+          patientClinicalMaterialsRanges.push(currentPatientClinicalMaterialsRange);
+          currentPatientClinicalMaterialsRange = null;
         }
         if (currentPatientElsewhereRange) {
           patientElsewhereGazeRanges.push(currentPatientElsewhereRange);
           currentPatientElsewhereRange = null;
         }
       }
-      // Process patient looking at other devices (value 8)
+      // Process patient looking at clinical materials (value 8)
       else if (value === 8) {
-        if (!currentPatientOtherDevicesRange) {
-          currentPatientOtherDevicesRange = { startFrame: frame, endFrame: frame };
-        } else if (frame === currentPatientOtherDevicesRange.endFrame + 1) {
+        if (!currentPatientClinicalMaterialsRange) {
+          currentPatientClinicalMaterialsRange = { startFrame: frame, endFrame: frame };
+        } else if (frame === currentPatientClinicalMaterialsRange.endFrame + 1) {
           // Extend the range if frames are consecutive
-          currentPatientOtherDevicesRange.endFrame = frame;
+          currentPatientClinicalMaterialsRange.endFrame = frame;
         } else {
           // Save the current range and start a new one
-          patientOtherDevicesRanges.push(currentPatientOtherDevicesRange);
-          currentPatientOtherDevicesRange = { startFrame: frame, endFrame: frame };
+          patientClinicalMaterialsRanges.push(currentPatientClinicalMaterialsRange);
+          currentPatientClinicalMaterialsRange = { startFrame: frame, endFrame: frame };
         }
         
         // End other ranges if active
@@ -600,9 +600,9 @@ const VideoAnnotator = () => {
           patientPhysicalExamRanges.push(currentPatientPhysicalExamRange);
           currentPatientPhysicalExamRange = null;
         }
-        if (currentPatientOtherDevicesRange) {
-          patientOtherDevicesRanges.push(currentPatientOtherDevicesRange);
-          currentPatientOtherDevicesRange = null;
+        if (currentPatientClinicalMaterialsRange) {
+          patientClinicalMaterialsRanges.push(currentPatientClinicalMaterialsRange);
+          currentPatientClinicalMaterialsRange = null;
         }
       }
     });
@@ -611,7 +611,7 @@ const VideoAnnotator = () => {
     if (currentPatientDoctorRange) patientDoctorGazeRanges.push(currentPatientDoctorRange);
     if (currentPatientScreenRange) patientScreenGazeRanges.push(currentPatientScreenRange);
     if (currentPatientPhysicalExamRange) patientPhysicalExamRanges.push(currentPatientPhysicalExamRange);
-    if (currentPatientOtherDevicesRange) patientOtherDevicesRanges.push(currentPatientOtherDevicesRange);
+    if (currentPatientClinicalMaterialsRange) patientClinicalMaterialsRanges.push(currentPatientClinicalMaterialsRange);
     if (currentPatientElsewhereRange) patientElsewhereGazeRanges.push(currentPatientElsewhereRange);
     
     // Format the final output to match the model data structure
@@ -625,12 +625,12 @@ const VideoAnnotator = () => {
           rightPersonGaze: doctorPatientGazeRanges,
           rightPersonScreen: doctorScreenGazeRanges,
           rightPersonPhysicalExam: doctorPhysicalExamRanges,
-          rightPersonOtherDevices: doctorOtherDevicesRanges,
+          rightPersonClinicalMaterials: doctorClinicalMaterialsRanges,
           rightPersonElsewhere: doctorElsewhereGazeRanges,
           leftPersonGaze: patientDoctorGazeRanges,
           leftPersonScreen: patientScreenGazeRanges,
           leftPersonPhysicalExam: patientPhysicalExamRanges,
-          leftPersonOtherDevices: patientOtherDevicesRanges,
+          leftPersonClinicalMaterials: patientClinicalMaterialsRanges,
           leftPersonElsewhere: patientElsewhereGazeRanges
         }
       }
@@ -759,11 +759,11 @@ const VideoAnnotator = () => {
           });
         }
         
-        // Process doctor looking at other devices ranges
-        if (manualAnnotations.rightPersonOtherDevices) {
-          manualAnnotations.rightPersonOtherDevices.forEach(range => {
+        // Process doctor looking at clinical materials ranges
+        if (manualAnnotations.rightPersonClinicalMaterials) {
+          manualAnnotations.rightPersonClinicalMaterials.forEach(range => {
             for (let frame = range.startFrame; frame <= range.endFrame; frame++) {
-              doctorAnnotations[frame] = 4; // doctor looking at other devices
+              doctorAnnotations[frame] = 4; // doctor looking at clinical materials
             }
           });
         }
@@ -804,11 +804,11 @@ const VideoAnnotator = () => {
           });
         }
         
-        // Process patient looking at other devices ranges
-        if (manualAnnotations.leftPersonOtherDevices) {
-          manualAnnotations.leftPersonOtherDevices.forEach(range => {
+        // Process patient looking at clinical materials ranges
+        if (manualAnnotations.leftPersonClinicalMaterials) {
+          manualAnnotations.leftPersonClinicalMaterials.forEach(range => {
             for (let frame = range.startFrame; frame <= range.endFrame; frame++) {
-              patientAnnotations[frame] = 8; // patient looking at other devices
+              patientAnnotations[frame] = 8; // patient looking at clinical materials
             }
           });
         }
@@ -866,7 +866,7 @@ const VideoAnnotator = () => {
         patientGaze: { correct: 0, total: 0 },
         screenGaze: { correct: 0, total: 0 },
         physicalExam: { correct: 0, total: 0 },
-        otherDevices: { correct: 0, total: 0 },
+        clinicalMaterials: { correct: 0, total: 0 },
         elsewhere: { correct: 0, total: 0 },
       };
 
@@ -896,7 +896,7 @@ const VideoAnnotator = () => {
         const userPatientGaze = value === 1; // User says doctor is looking at patient
         const userScreenGaze = value === 2; // User says doctor is looking at screen
         const userPhysicalExam = value === 3; // User says doctor is doing physical exam
-        const userOtherDevices = value === 4; // User says doctor is looking at other devices
+        const userClinicalMaterials = value === 4; // User says doctor is looking at clinical materials
         const userElsewhere = value === 5; // User says doctor is looking elsewhere
 
         // Calculate accuracy for patient gaze
@@ -922,11 +922,11 @@ const VideoAnnotator = () => {
           metrics.physicalExam.correct++;
         }
 
-        // Calculate accuracy for other devices (new category - no model data yet)
-        if (userOtherDevices) {
-          metrics.otherDevices.total++;
+        // Calculate accuracy for clinical materials (new category - no model data yet)
+        if (userClinicalMaterials) {
+          metrics.clinicalMaterials.total++;
           // For now, we can't validate against model data, so we'll mark as correct
-          metrics.otherDevices.correct++;
+          metrics.clinicalMaterials.correct++;
         }
 
         // Calculate accuracy for elsewhere gaze
@@ -943,7 +943,7 @@ const VideoAnnotator = () => {
         doctorGaze: { correct: 0, total: 0 },
         screenGaze: { correct: 0, total: 0 },
         physicalExam: { correct: 0, total: 0 },
-        otherDevices: { correct: 0, total: 0 },
+        clinicalMaterials: { correct: 0, total: 0 },
         elsewhere: { correct: 0, total: 0 },
       };
 
@@ -972,7 +972,7 @@ const VideoAnnotator = () => {
         const userDoctorGaze = value === 5; // User says patient is looking at doctor
         const userScreenGaze = value === 6; // User says patient is looking at screen
         const userPhysicalExam = value === 7; // User says patient is doing physical exam
-        const userOtherDevices = value === 8; // User says patient is looking at other devices
+        const userClinicalMaterials = value === 8; // User says patient is looking at clinical materials
         const userElsewhere = value === 9; // User says patient is looking elsewhere
 
         // Calculate accuracy for doctor gaze
@@ -998,11 +998,11 @@ const VideoAnnotator = () => {
           metrics.physicalExam.correct++;
         }
 
-        // Calculate accuracy for other devices (new category - no model data yet)
-        if (userOtherDevices) {
-          metrics.otherDevices.total++;
+        // Calculate accuracy for clinical materials (new category - no model data yet)
+        if (userClinicalMaterials) {
+          metrics.clinicalMaterials.total++;
           // For now, we can't validate against model data, so we'll mark as correct
-          metrics.otherDevices.correct++;
+          metrics.clinicalMaterials.correct++;
         }
 
         // Calculate accuracy for elsewhere gaze
@@ -1262,7 +1262,7 @@ const VideoAnnotator = () => {
                   <span className="inline-block w-24 px-2 py-1 bg-gray-200 rounded mr-2 text-center">
                     4
                   </span>
-                  <span>Looking at other devices</span>
+                  <span>Looking at clinical materials</span>
                 </li>
                 <li className="flex items-center">
                   <span className="inline-block w-24 px-2 py-1 bg-gray-200 rounded mr-2 text-center">
@@ -1306,7 +1306,7 @@ const VideoAnnotator = () => {
                   <span className="inline-block w-24 px-2 py-1 bg-gray-200 rounded mr-2 text-center">
                     8
                   </span>
-                  <span>Looking at other devices</span>
+                  <span>Looking at clinical materials</span>
                 </li>
                 <li className="flex items-center">
                   <span className="inline-block w-24 px-2 py-1 bg-gray-200 rounded mr-2 text-center">
@@ -1366,23 +1366,23 @@ const VideoAnnotator = () => {
               <ul className="space-y-2">
                 <li className="flex items-center">
                   <span className="inline-block w-6 h-6 rounded bg-green-500 mr-2"></span>
-                  <span>Looking at Patient</span>
+                  <span>(1) Looking at Patient</span>
                 </li>
                 <li className="flex items-center">
                   <span className="inline-block w-6 h-6 rounded bg-red-500 mr-2"></span>
-                  <span>Looking at Screen</span>
+                  <span>(2) Looking at Screen</span>
                 </li>
                 <li className="flex items-center">
                   <span className="inline-block w-6 h-6 rounded bg-blue-500 mr-2"></span>
-                  <span>Physical exam</span>
+                  <span>(3) Physical exam</span>
                 </li>
                 <li className="flex items-center">
                   <span className="inline-block w-6 h-6 rounded bg-orange-500 mr-2"></span>
-                  <span>Looking at other devices</span>
+                  <span>(4) Looking at clinical materials</span>
                 </li>
                 <li className="flex items-center">
                   <span className="inline-block w-6 h-6 rounded bg-gray-400 mr-2"></span>
-                  <span>Looking Elsewhere</span>
+                  <span>(5) Looking Elsewhere</span>
                 </li>
               </ul>
             </div>
@@ -1392,23 +1392,23 @@ const VideoAnnotator = () => {
               <ul className="space-y-2">
                 <li className="flex items-center">
                   <span className="inline-block w-6 h-6 rounded bg-green-500 mr-2"></span>
-                  <span>Looking at Doctor</span>
+                  <span>(5) Looking at Doctor</span>
                 </li>
                 <li className="flex items-center">
                   <span className="inline-block w-6 h-6 rounded bg-red-500 mr-2"></span>
-                  <span>Looking at Screen</span>
+                  <span>(6) Looking at Screen</span>
                 </li>
                 <li className="flex items-center">
                   <span className="inline-block w-6 h-6 rounded bg-blue-500 mr-2"></span>
-                  <span>Physical exam</span>
+                  <span>(7) Physical exam</span>
                 </li>
                 <li className="flex items-center">
                   <span className="inline-block w-6 h-6 rounded bg-orange-500 mr-2"></span>
-                  <span>Looking at other devices</span>
+                  <span>(8) Looking at clinical materials</span>
                 </li>
                 <li className="flex items-center">
                   <span className="inline-block w-6 h-6 rounded bg-gray-400 mr-2"></span>
-                  <span>Looking Elsewhere</span>
+                  <span>(9) Looking Elsewhere</span>
                 </li>
               </ul>
             </div>
@@ -1563,11 +1563,11 @@ const VideoAnnotator = () => {
                       </div>
                     </div>
 
-                    {/* Looking at other devices */}
+                    {/* Looking at clinical materials */}
                     <div>
                       <div className="flex justify-between mb-2">
                         <span className="text-sm font-medium text-gray-700">
-                          Looking at other devices
+                          Looking at clinical materials
                         </span>
                         <span className="text-sm font-medium text-gray-700">
                           {(() => {
@@ -1576,10 +1576,10 @@ const VideoAnnotator = () => {
                               modelData,
                               "doctor"
                             );
-                            if (!stats?.otherDevices.total) return "0%";
+                            if (!stats?.clinicalMaterials.total) return "0%";
                             return `${(
-                              (stats.otherDevices.correct /
-                                stats.otherDevices.total) *
+                              (stats.clinicalMaterials.correct /
+                                stats.clinicalMaterials.total) *
                               100
                             ).toFixed(1)}%`;
                           })()}
@@ -1595,12 +1595,12 @@ const VideoAnnotator = () => {
                                 modelData,
                                 "doctor"
                               );
-                              if (!stats?.otherDevices.total) return "0%";
-                              return `${
-                                (stats.otherDevices.correct /
-                                  stats.otherDevices.total) *
-                                100
-                              }%`;
+                            if (!stats?.clinicalMaterials.total) return "0%";
+                            return `${
+                              (stats.clinicalMaterials.correct /
+                                stats.clinicalMaterials.total) *
+                              100
+                            }%`;
                             })(),
                           }}
                         ></div>
@@ -1791,11 +1791,11 @@ const VideoAnnotator = () => {
                       </div>
                     </div>
 
-                    {/* Looking at other devices */}
+                    {/* Looking at clinical materials */}
                     <div>
                       <div className="flex justify-between mb-2">
                         <span className="text-sm font-medium text-gray-700">
-                          Looking at other devices
+                          Looking at clinical materials
                         </span>
                         <span className="text-sm font-medium text-gray-700">
                           {(() => {
@@ -1804,10 +1804,10 @@ const VideoAnnotator = () => {
                               modelData,
                               "patient"
                             );
-                            if (!stats?.otherDevices.total) return "0%";
+                            if (!stats?.clinicalMaterials.total) return "0%";
                             return `${(
-                              (stats.otherDevices.correct /
-                                stats.otherDevices.total) *
+                              (stats.clinicalMaterials.correct /
+                                stats.clinicalMaterials.total) *
                               100
                             ).toFixed(1)}%`;
                           })()}
@@ -1823,12 +1823,12 @@ const VideoAnnotator = () => {
                                 modelData,
                                 "patient"
                               );
-                              if (!stats?.otherDevices.total) return "0%";
-                              return `${
-                                (stats.otherDevices.correct /
-                                  stats.otherDevices.total) *
-                                100
-                              }%`;
+                            if (!stats?.clinicalMaterials.total) return "0%";
+                            return `${
+                              (stats.clinicalMaterials.correct /
+                                stats.clinicalMaterials.total) *
+                              100
+                            }%`;
                             })(),
                           }}
                         ></div>
