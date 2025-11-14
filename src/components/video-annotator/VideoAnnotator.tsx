@@ -1130,6 +1130,7 @@ const VideoAnnotator = () => {
               <option value="1">1 frame</option>
               <option value="5">5 frame</option>
               <option value="10">10 frames</option>
+              <option value="15">15 frames</option>
               <option value="20">20 frames</option>
               <option value="50">50 frames</option>
               <option value="200">200 frames</option>
