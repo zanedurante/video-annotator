@@ -111,6 +111,30 @@ const VideoAnnotator = () => {
     [totalFrames]
   );
 
+    // When the user clicks on the timeline, jump to the nearest valid "step" frame
+  const handleTimelineFrameSelect = useCallback(
+    (frame) => {
+      if (!totalFrames) return;
+      if (typeof frame !== "number" || Number.isNaN(frame)) return;
+
+      // Snap to nearest multiple of frameInterval: 0, N, 2N, 3N, ...
+      let snapped;
+      if (frameInterval > 0) {
+        snapped = Math.round(frame / frameInterval) * frameInterval;
+      } else {
+        snapped = Math.round(frame);
+      }
+
+      // Clamp to [0, totalFrames]
+      if (snapped < 0) snapped = 0;
+      if (snapped > totalFrames) snapped = totalFrames;
+
+      setCurrentFrame(snapped);
+    },
+    [totalFrames, frameInterval]
+  );
+
+
   // Add single annotation and store as last annotation
   const addAnnotation = useCallback(
     (value) => {
@@ -1352,6 +1376,7 @@ const VideoAnnotator = () => {
                   totalFrames={totalFrames}
                   annotationPhase={annotationPhase}
                   currentFrame={currentFrame}
+                  onFrameSelect={handleTimelineFrameSelect}
                 />
               </div>
             )}

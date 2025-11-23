@@ -9,9 +9,11 @@ const TimelineVisualization = ({
   manualAnnotations, 
   modelData, 
   totalFrames,
-  annotationPhase, // Add this parameter to know which timeline is active
-  currentFrame
+  annotationPhase, // 'doctor' or 'patient'
+  currentFrame,
+  onFrameSelect,   // NEW: called when user clicks on timeline
 }) => {
+
   if (!totalFrames) return null;
 
   // Refs for the canvas elements
@@ -248,6 +250,18 @@ const TimelineVisualization = ({
   const doctorContainerRef = useRef(null);
   const patientContainerRef = useRef(null);
 
+    // When the user clicks on a timeline container, convert the X position into a frame
+  const handleTimelineClick = (event, containerRef) => {
+    if (!totalFrames || !containerRef.current || !onFrameSelect) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;         // pixels from left edge
+    const ratio = Math.min(Math.max(clickX / rect.width, 0), 1); // 0–1
+
+    const rawFrame = Math.round(ratio * totalFrames);
+    onFrameSelect(rawFrame); // parent will handle snapping to interval
+  };
+
   // Calculate the position of the current frame marker with better precision
   const getFrameMarkerPosition = (containerRef) => {
     if (!totalFrames || !containerRef.current) return 0;
@@ -276,7 +290,11 @@ const TimelineVisualization = ({
             Doctor Gaze Annotations
           </div>
         </div>
-        <div className="relative" ref={doctorContainerRef}>
+        <div
+          className="relative"
+          ref={doctorContainerRef}
+          onClick={(event) => handleTimelineClick(event, doctorContainerRef)}
+        >
           <canvas 
             ref={doctorCanvasRef}
             width={1000}
@@ -331,7 +349,11 @@ const TimelineVisualization = ({
             Patient Gaze Annotations
           </div>
         </div>
-        <div className="relative" ref={patientContainerRef}>
+        <div
+          className="relative"
+          ref={patientContainerRef}
+          onClick={(event) => handleTimelineClick(event, patientContainerRef)}
+        >
           <canvas 
             ref={patientCanvasRef}
             width={1000}
